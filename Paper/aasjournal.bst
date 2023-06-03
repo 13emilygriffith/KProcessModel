@@ -195,6 +195,7 @@ ENTRY
     year
     version
     url
+    shortid
   }
   {}
   { label extra.label sort.label short.list }
@@ -1168,6 +1169,12 @@ FUNCTION {format.full.book.spec} % The title should be on the stack.
     if$
 }
 
+FUNCTION {format.shortid}
+{ shortid empty$
+    { "" }
+    { shortid }
+  if$
+}
 %%%%%%%  End of functions from astrobib
 
 FUNCTION {article}
@@ -1191,6 +1198,7 @@ FUNCTION {article}
     { format.journal.pages }
   if$
   format.pid output
+  format.shortid output
   fin.entry
 }
 
