@@ -1,5 +1,14 @@
+% This document is part of the KPM project
+% Copyright 2023 the authors.
+% ------------------------------------------------------------------
+
+% to-do items
+% -----------
+% - Look at all latex warnings on the build
+
 \documentclass[modern]{aastex631}
 \usepackage{amsmath}
+\usepackage{microtype}
 \usepackage{soul}
 
 % Abundance and stellar macros
@@ -11,7 +20,6 @@
 \newcommand{\feh}[0]{[{\rm Fe/H}]}
 \newcommand{\xfe}{[{\rm X}/{\rm Fe}]}
 \newcommand{\xh}{[{\rm X}/{\rm H}]}
-
 \newcommand{\logg}{\log(g)}
 \newcommand{\teff}{T_{\rm eff}}
 \newcommand{\kpc}{\rm \; kpc}
@@ -20,7 +28,6 @@
 \newcommand{\rgc}{R_{\rm GC}}
 \newcommand{\msunvice}{M_{\odot}/M_{\odot \rm formed}}
 \newcommand{\MZAMS}{M_{\rm ZAMS}}
-
 \newcommand{\qcc}{q_{{\rm CC,}j}^{Z}}
 \newcommand{\qccFe}{q_{{\rm CC, Fe}}^{Z}}
 \newcommand{\dqccFe}{dq_{{\rm CC, Fe}}^{Z}/dZ}
@@ -89,7 +96,7 @@ We also explore third and fourth processes, calibrated to Ce and Mn, respectivel
  
 \section{Introduction}\label{sec:intro}
 
-After hydrogen, helium, lithium, and beryllium, all other naturally occurring elements are made in the stars, and the collisions of stars.
+After hydrogen, helium, lithium, and beryllium, all other naturally occurring elements are made in stars, supernovae, and the collisions of stars.
 Stellar surface abundances---the abundances measured by taking a spectrum of a stellar photosphere---are thought to deliver a relatively unprocessed record of the element abundances in the gas from which the star formed \citep[though see e.g.,][]{pinsonneault2001, oh2018, souto2019, vincenzo2021b}.
 These birth abundances were set by a combination of nucleosynthetic processes involved in making heavy atomic nuclei, and astrophysical processes involved in delivering atoms from stellar interiors to star-formation sites \citep[e.g.,][]{johnsonja2020}.
 Thus nuclear physics and a wide swath of astrophysics are critically intertwined in our understanding of stellar surface abundances, motivating theoretical, experimental, and observational work.
@@ -143,7 +150,7 @@ Because yields depend on stellar masses and progenitor structure, and because di
 \paragraph{3. Non-negativity}
 All process vector components for all elements are non-negative and all process amplitudes are non-negative.
 This assumption implies that the elements considered here are only produced, and not ever destroyed, by the $K$ processes (relative to hydrogen).
-This makes the model similar to a non-negative matrix factorization (\citealt{nnmf} \ejg{Hogg add citation}). In \name{}, this assumption is enforced by requiring that the process vector components and amplitudes are always greater than or equal to zero, such that
+This makes the model similar to a non-negative matrix factorization (\citealt{nnmf, nnmf2}). In \name{}, this assumption is enforced by requiring that the process vector components and amplitudes are always greater than or equal to zero, such that
 \begin{equation} \label{eq:constraint_zero}
     q_{k,j}^Z \geq 0 \; \forall \; Z,k,j \quad \text{and} \quad A_i^k \geq 0 \; \forall \; k,i ~.
 \end{equation}
@@ -205,7 +212,7 @@ In detail the (negative two times the) log likelihood function is given by a chi
 where $1/\sigma_ij^2$ is the (robust; see below) inverse variance on measurement $ij$,
 and $Q$ is a light regularization that depends on the parameters.
 
-Because we don't want to be too drawn or influenced by outlier points, we don't use the observed errors $\sigma_{{\rm obs},ij}$ in the likelihood, but instead we soften them in the spirit of iteratively reweighted least squares (HOGG CITE):
+Because we don't want to be too drawn or influenced by outlier points, we don't use the observed errors $\sigma_{{\rm obs},ij}$ in the likelihood, but instead we soften them in the spirit of iteratively reweighted least squares (\citealt{irls}):
 \begin{equation}\label{eq:inflate_ivar}
     \frac{1}{\sigma_{ij}^2} = \frac{Q^2/\sigma_{{\rm obs},ij}^2}{Q^2 + (\xh_{ij} - m_{ij})^2 /\sigma_{{\rm obs},ij}^2 },    
 \end{equation}
@@ -496,8 +503,7 @@ SDSS is managed by the Astrophysical Research Consortium for the Participating I
 
 \facilities{Sloan, Kepler}
 
-\bibliography{sample631}{}
+\bibliography{kpm}{}
 \bibliographystyle{aasjournal}
 
 \end{document}
-
