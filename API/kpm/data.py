@@ -1,4 +1,3 @@
-
 import numpy as np
 import warnings
 import jax.numpy as jnp
@@ -324,7 +323,11 @@ class FixedParams:
     
     @property
     def Lambda_a(self):
-        return self._Lambda_a 
+        return self._Lambda_a
+    
+    @Lambda_A.setter
+    def Lambda_A(self, value):
+        self._Lambda_A = value 
     
     @property
     def Lambda_c(self):
