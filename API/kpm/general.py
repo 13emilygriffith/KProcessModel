@@ -5,13 +5,13 @@ from jax.scipy.special import logsumexp
 from jax import vmap
 import numpy as np
 
-def get_lnqs(FixedParams, FitParams):
+def get_lnqs(fixed, fit):
     """
     linear interpolation on vmap?
     """
     return jnp.concatenate([vmap(jnp.interp, in_axes=(None, None, 1),
-                                 out_axes=(1))(FixedParams.xs, FixedParams.knot_xs[k], FitParams.lnqs[k])[None, :, :]
-                            for k in range(FixedParams.K)], axis=0)
+                                 out_axes=(1))(fixed.xs, fixed.knot_xs[k], fit.lnqs[k])[None, :, :]
+                            for k in range(fixed.K)], axis=0)
 
 ## Not needed 
 # def get_processes(K):
@@ -19,7 +19,7 @@ def get_lnqs(FixedParams, FitParams):
 #     processes = processes_all[:K]
 #     return processes
 
-def all_stars_KPM(FixedParams, FitParams):
+def all_stars_KPM(fixed, fit):
     """
     ## inputs
     - `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
@@ -33,8 +33,8 @@ def all_stars_KPM(FixedParams, FitParams):
     ## comments
     - Note the `ln10`.
     """
-    return logsumexp(FitParams.lnAs[:, :, None]
-                     + get_lnqs(FixedParams, FitParams), axis=0) / _LN10
+    return logsumexp(fit.lnAs[:, :, None]
+                     + get_lnqs(fixed, fit), axis=0) / _LN10
 
 def internal_get_lnqs(K, lnqs, knot_xs, xs):
     """
