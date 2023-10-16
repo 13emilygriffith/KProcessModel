@@ -7,11 +7,9 @@ import numpy as np
 
 def get_lnqs(fixed, fit):
     """
-    linear interpolation on vmap?
+    see `internal_get_lnqs` for actual information.
     """
-    return jnp.concatenate([vmap(jnp.interp, in_axes=(None, None, 1),
-                                 out_axes=(1))(fixed.xs, fixed.knot_xs[k], fit.lnqs[k])[None, :, :]
-                            for k in range(fixed.K)], axis=0)
+    return internal_get_lnqs(fit.lnq_pars, fixed.xlim[1] - fixed.xlim[0], fixed.xs)
 
 ## Not needed 
 # def get_processes(K):
@@ -21,11 +19,11 @@ def get_lnqs(fixed, fit):
 
 def all_stars_KPM(fixed, fit):
     """
-    ## inputs
+    ## inputs -- actually these are things in `fixed` and `fit`
     - `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
-    - `lnqs`: shape `(K, Nknot, M)` natural-logarithmic processes
-    - `knot_xs`: shape `(Nknot, )` metallicity bin centers
-    - `xs`: shape `(N, )` abundance data (used to interpolate the `lnqs`)
+    - `lnq_pars`: shape `(K, 2*J+1, M)` amplitudes
+    - `xlim`: shape `(2, )` metallicity range
+    - `xs`: shape `(N, )` abundance data (used to get the `lnqs`)
 
     ## outputs
     shape `(M, )` log_10 abundances
@@ -36,10 +34,18 @@ def all_stars_KPM(fixed, fit):
     return logsumexp(fit.lnAs[:, :, None]
                      + get_lnqs(fixed, fit), axis=0) / _LN10
 
-def internal_get_lnqs(K, lnqs, knot_xs, xs):
+def fourier_sum(amps, argument):
+    foo = amps[0]
+    for j in range(1, (len(amps) - 1) // 2 + 1):
+        foo += amps[2*j - 1] * jnp.cos(j * argument) \
+             + amps[2*j]     * jnp.sin(j * argument)
+    return foo
+
+fourier_sum_orama = vmap(vmap(fourier_sum, in_axes=(0, None), out_axes=1), in_axes=(0, None), out_axes=0)
+
+def internal_get_lnqs(lnq_pars, L, xs):
     """
-    linear interpolation on vmap?
+    sums of sines and cosines
     """
-    return jnp.concatenate([vmap(jnp.interp, in_axes=(None, None, 1),
-                                 out_axes=(1))(xs, knot_xs[k], lnqs[k])[None, :, :]
-                            for k in range(K)], axis=0)
+    tmp = jnp.swapaxes(lnq_pars, 1, 2)
+    return fourier_sum_orama(tmp, xs / L)
