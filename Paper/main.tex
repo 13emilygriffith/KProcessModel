@@ -5,10 +5,12 @@
 % to-do items
 % -----------
 
-\documentclass[modern]{aastex631}
+\documentclass[modern, linenumbers]{aastex631}
 \usepackage{amsmath}
 \usepackage{microtype}
 \usepackage{soul}
+% \usepackage{lineno}
+% \linenumbers
 
 % Abundance and stellar macros
 \newcommand{\mgfe}[0]{[{\rm Mg/Fe}]}
@@ -72,6 +74,7 @@
 \graphicspath{{./}{Figures/}}
 \begin{document}
 
+
 \title{\name: A flexible and data-driven K-process model for nucleosynthesis}
 
 \correspondingauthor{Emily J. Griffith}
@@ -106,8 +109,8 @@
 
 
 \begin{abstract}\noindent
-The element abundance pattern found by APOGEE and GALAH in Milky Way disk stars is close to two-dimensional, dominated by production from one prompt process and one delayed process.
-This simplicity is remarkable, since the elements are produced by a multitude of nucleosynthesis mechanisms operating in stars with a wide range of progenitor masses.
+The element abundance pattern found by APOGEE in Milky Way disk stars is close to two-dimensional, dominated by production from one prompt process and one delayed process.
+This is remarkable, since the elements are known to be produced by many more than two nucleosynthetic sources.
 We fit the abundances of 14 elements for 48,659 red-giant stars from APOGEE DR17 using a flexible, data-driven $K$-process model---dubbed \name.
 In our fiducial model, with $K=2$, each abundance in each star is described as the sum of a prompt and a delayed process contribution.
 We find that \name{} with $K=2$ is able to explain the abundances well, recover the observed abundance bimodality, and detect the bimodality over a greater range in metallicity than previously has been possible.
@@ -362,7 +365,7 @@ In addition to process vector components, each star is fit with a prompt and del
 
 \begin{deluxetable}{cccc}
     \tablecaption{Fiducial model $\Acc$ and $\AIa$ values for our stellar sample.
-    \label{tab:qIa}}
+    \label{tab:As}}
     \tablehead{
 \colhead{APOGEE ID} &	\colhead{[Mg/H]} & \colhead{$\Acc$} &	\colhead{$\AIa$}} 
 \startdata
@@ -577,7 +580,7 @@ Beyond improving the definition of high-Ia and low-Ia populations, the \name{} p
 \end{figure*}
 
 Such analysis with \name{} parameters will be useful in studying nucleosynthesis, dynamics, disk formation, stellar ages, and much more. However, in this paper we only present fits for a small population with restricted stellar parameters, relative to the full APOGEE sample. 
-\ejg{Add references to tables with q values at knots and A values for all stars.} While \name{} could be fit to the full APOGEE sample, systematic abundance effects with $\teff$ and $\logg$, as well as other abundance artifacts \citep[e.g.,][]{jonsson2020, griffith2021a}, cause the abundance trends to differ across the Hertzsprung-Russell diagram. The best-fit \name{} parameters for the giants would differ from those for the dwarfs. If such systematics could be accounted for (see Sit et al. in prep) we could fit the full APOGEE stellar sample with \name{}, or train \name{} on a subset of high signal-to-noise stars and apply the fits to the full sample. This potential future analysis could reveal additional information about the nucleosynthetic history of our Galaxy and would provide higher signal-to-noise abundance labels for the full sample.
+While \name{} could be fit to the full APOGEE sample, systematic abundance effects with $\teff$ and $\logg$, as well as other abundance artifacts \citep[e.g.,][]{jonsson2020, griffith2021a}, cause the abundance trends to differ across the Hertzsprung-Russell diagram. The best-fit \name{} parameters for the giants would differ from those for the dwarfs. If such systematics could be accounted for (see Sit et al. in prep) we could fit the full APOGEE stellar sample with \name{}, or train \name{} on a subset of high signal-to-noise stars and apply the fits to the full sample. This potential future analysis could reveal additional information about the nucleosynthetic history of our Galaxy and would provide higher signal-to-noise abundance labels for the full sample.
 
 The success of the two-process model (W19, W22) and \name{} with $K=2$ suggests that the distribution of disk stars in APGOEE abundance space is largely two-dimensional (2D), though more dimensions are required to fully explain the data (\citealp{ting2022}, W22). In this paper, we have focused on a 2D nucleosynthetic model, with the two dimensions representing prompt CCSN-like enrichment and delayed SNIa-like enrichment. However, another 2D class of theoretical models for the Milky Way exists, describing stars in terms of birth radius and birth date \citep[e.g.,][]{frankel2018, ness2022}. Are these two 2D models related? If they are, then the nucleosynthetic parameters from \name{} ($\AIa$ and $\Acc$) should predict asteroseismic ages (or masses), up to unpredictable aspects of mass transfer, as well as the guiding center radius, up to unpredictable aspects of radial migration. While a deeper study of the implications of the disk's two-dimensionality is outside the scope of this work, we show the relationship between asteroseismic age from the APOKASC sample \citep{pinsonneault2018} and process amplitudes in Figure~\ref{fig:age}. Here we see a clear gradient in age with $\Acc$ and $\AIa/\Acc$ (as in G22 and W22), though outlier stars are scattered throughout. We predict that the \name{} parameters will be better age diagnostics than APOGEE abundances, and that age outliers may be mass transfer objects. 
 
