@@ -35,8 +35,9 @@ def all_stars_KPM(fixed, fit):
                      + get_lnqs(fixed, fit), axis=0) / _LN10
 
 def fourier_sum(amps, argument):
-    foo = amps[0]
+    foo = amps[0] * jnp.ones_like(argument)
     for j in range(1, (len(amps) - 1) // 2 + 1):
+        #print('fourier_sum', j)
         foo += amps[2*j - 1] * jnp.cos(j * argument) \
              + amps[2*j]     * jnp.sin(j * argument)
     return foo

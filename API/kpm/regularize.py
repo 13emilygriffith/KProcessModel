@@ -7,12 +7,12 @@ __all__ = ["regularizations"]
 
 class regularizations:
 
-	def __init__(self, data, fixed, init_q=0.1):
+	def __init__(self, data, fixed):
 
-		self.A = self.A(fixed)
-		self.Q = self.Q(data, fixed, init_q)
+		self.A = self.A_c(fixed)
+		self.Q = self.Q_c(data, fixed)
 
-	class A:
+	class A_c:
 		"""
 		Add Text
 
@@ -32,7 +32,7 @@ class regularizations:
 		def sqrt_Lambda_A(self):
 			return self._sqrt_Lambda_A
 
-	class Q:
+	class Q_c:
 
 		"""
 		Add Text
@@ -40,19 +40,18 @@ class regularizations:
 		TO DO: ADD For K>2
 		"""
 
-		def __init__(self, data, fixed, init_q = 0.1):
+		def __init__(self, data, fixed):
 
 			q_array = np.zeros((fixed.K, fixed.J, data.M))
 			Lambdas = q_array + fixed.Lambda_c
-			q0s = q_array 
-			q0s[:,0,:] += init_q
+			q0s = q_array + 1.0
 			fixed_q = q_array.astype(bool)
 
 			# 1: Strongly require that q_X = 1 for CC process for CC_elem
 			proc = fixed.processes == "CC"
 			elem = data.elements == fixed.CC_elem
 			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 0.0
+			q0s[    proc, :, elem] = 1.0
 			q0s[    proc, 0, elem] = 1.0
 			fixed_q[  proc, :, elem] = True
 
@@ -60,14 +59,15 @@ class regularizations:
 			proc = fixed.processes != "CC"
 			elem = data.elements == fixed.CC_elem
 			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 0.0
+			q0s[    proc, :, elem] = 1.0
+			q0s[    proc, 0, elem] = 0.0
 			fixed_q[  proc, :, elem] = True
 
 			# 3: Require that q_X has some value / form for CC process for Ia_elem
 			proc = fixed.processes == "CC"
 			elem = data.elements == fixed.Ia_elem
 			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 0.0
+			q0s[    proc, :, elem] = 1.0
 			q0s[    proc, 0, elem] = fixed.q_CC_Fe 
 			fixed_q[  proc, :, elem] = True
 
@@ -75,19 +75,14 @@ class regularizations:
 			proc = fixed.processes == "Ia"
 			elem = data.elements == fixed.Ia_elem
 			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 0.0
+			q0s[    proc, :, elem] = 1.0
 			q0s[    proc, 0, elem] = 1.0 - fixed.q_CC_Fe
 			fixed_q[  proc, :, elem] = True
 
-			self._init_q = init_q
 			self._Lambdas = Lambdas
 			self._q0s = q0s
 			self._lnq_par0s = np.log(np.clip(q0s, 1.e-7, None))
 			self._fixed_q = fixed_q
-
-		@property
-		def init_q(self):
-			return self._init_q
 
 		@property
 		def Lambdas(self):

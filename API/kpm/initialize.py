@@ -23,6 +23,7 @@ def initialize_2(data, fixed):
 
 	regs = regularizations(data, fixed)
 	fit = fit_params(data, fixed)
+	print(np.shape(fit.lnq_pars))
 
 	fit.lnq_pars = jnp.where(regs.Q.fixed_q, regs.Q.lnq_par0s, fit.lnq_pars)
 
@@ -39,47 +40,47 @@ def initialize_2(data, fixed):
 
 
 def run_kpm(data, fixed, file_path, name='kpm_allstars', N_rounds=3, N_itters=16, overwrite=False):
-    """
+	"""
 	Maybe this should move to a different file
 
-    Add notes
-    N_itters = number of itterations of Aq step to run per round
-    N_rounds = number of rounds of itterations. After each itteration we recalculate the ivars and save
+	Add notes
+	N_itters = number of itterations of Aq step to run per round
+	N_rounds = number of rounds of itterations. After each itteration we recalculate the ivars and save
 
-    """
+	"""
 
-    # add error handeling so that N_rounds > 0 and N_itters > 0
-    # set some maximum limit on the number of itterations
+	# add error handeling so that N_rounds > 0 and N_itters > 0
+	# set some maximum limit on the number of itterations
 
-    # initialize fit
-    # should only initialize if first file doesn't exist
-    # Need to update so if early file is missing but later isn't it reruns whole thing
-    data, fit = initialize_2(data, fixed)
+	# initialize fit
+	# should only initialize if first file doesn't exist
+	# Need to update so if early file is missing but later isn't it reruns whole thing
+	data, fit = initialize_2(data, fixed)
 
-    pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_CC_Fe)
-    
-    # run round of itterations
-    for r in range(N_rounds):
-        pik_name = pik_suffix + '_' + str(r) + '.out'
-        if (os.path.isfile(pik_name)==True) and (overwrite==False):
-            print('File %s exists, loading data' % (pik_name))
-            with open(pik_name, "rb") as f:
-                fit, fixed = pickle.load(f)
-                # NEED TO CHECK IF FIXED IS THE SAME AS ORIGINAL
-                # NEED TO CHECK IF EMPTY
+	pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_CC_Fe)
 
-        elif (os.path.isfile(pik_name)==False) or (overwrite==True):
-            if (os.path.isfile(pik_name)==True) and (overwrite==True):
-                print('File %s exists, but overwriting' % (pik_name))
+	# run round of itterations
+	for r in range(N_rounds):
+		pik_name = pik_suffix + '_' + str(r) + '.out'
+		if (os.path.isfile(pik_name)==True) and (overwrite==False):
+			print('File %s exists, loading data' % (pik_name))
+			with open(pik_name, "rb") as f:
+				fit, fixed = pickle.load(f)
+				# NEED TO CHECK IF FIXED IS THE SAME AS ORIGINAL
+				# NEED TO CHECK IF EMPTY
 
-            for i in range(N_itters):
-                fit = Aq_step(data, fixed, fit)
-            
-            save = [fit, fixed]
-            with open(pik_name, "wb") as f:
-                pickle.dump(save, f)
+		elif (os.path.isfile(pik_name)==False) or (overwrite==True):
+			if (os.path.isfile(pik_name)==True) and (overwrite==True):
+				print('File %s exists, but overwriting' % (pik_name))
 
-            data.allivars = inflate_ivars(data, fixed, fit)
+			for i in range(N_itters):
+				fit = Aq_step(data, fixed, fit)
+			
+			save = [fit, fixed]
+			with open(pik_name, "wb") as f:
+				pickle.dump(save, f)
 
-    data.allivars = data.allivars_orig
-    return data, fixed, fit
+			data.allivars = inflate_ivars(data, fixed, fit)
+
+	data.allivars = data.allivars_orig
+	return data, fixed, fit
