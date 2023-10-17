@@ -4,7 +4,7 @@ from jax.scipy.special import logsumexp
 import jaxopt
 
 from ._globals import _LN10
-from .general import internal_get_lnqs as get_lnqs
+from .general import internal_get_lnqs
 
 def one_star_KPM(lnAs, lnqs):
     """
@@ -38,7 +38,7 @@ def one_star_chi(lnAs, lnqs, alldata, sqrt_ivars, sqrt_Lambda):
 def one_star_A_step(lnqs, alldata, sqrt_ivars, sqrt_Lambda, init):
     """
     ## inputs
-    - `lnqs`: shape `(K, M)` natural-logarithmic processes
+    - `lnqs`: shape `(K, M)` natural-logarithmic processes 
     - `alldata`: shape `(M, )` log_10 abundance measurements
     - `sqrt_ivars`: shape `(M, )` inverse errors on the data
     - `sqrt_Lambda`: shape `(K, )` regularization
@@ -73,39 +73,38 @@ def one_element_KPM(lnqs, lnAs):
     """
     return logsumexp(lnqs + lnAs, axis=0) / _LN10
 
-def one_element_chi(lnqs, lnAs, alldata, sqrt_ivars, knot_xs, xs, sqrt_Lambdas, q0s):
+def one_element_chi(lnq_pars, lnAs, alldata, sqrt_ivars, L, xs, sqrt_Lambdas, q0s):
     """
     ## inputs
-    - `lnqs`: shape `(K, Nknot)` natural-logarithmic process vectors
+    - `lnqs`: shape `(K, J)` natural-logarithmic process vectors
     - `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
     - `alldata`: shape `(N, )` log_10 abundance measurements
     - `sqrt_ivars`: shape `(N, )` inverse variances on the data
-    - `knot_xs`: shape `(Nknot, )` metallicity bin "centers"
+    - `L`: xrange
     - `xs` : shape `(N, )` metallicities to use with `metallicities`
     - `sqrt_Lambdas`: shape `(K, Nbin)` list of regularization amplitudes
-    - `q0s`: shape `(K, Nknot)` 
+    - `q0s`: shape `(K, J)` 
 
     ## outputs
     chi for this one star (weighted residual)
     """
-    K, Nknot = knot_xs.shape
-    interp_lnqs = get_lnqs(K, lnqs[:, :, None], knot_xs, xs)[:, :, 0]
-    return jnp.concatenate([sqrt_ivars * (alldata - one_element_KPM(interp_lnqs, lnAs)),
-                            jnp.ravel(sqrt_Lambdas * (jnp.exp(lnqs) - q0s))])
+    lnqs = internal_get_lnqs(lnq_pars[:, :, None], L, xs)[:, :, 0]
+    return jnp.concatenate([sqrt_ivars * (alldata - one_element_KPM(lnqs, lnAs)),
+                            jnp.ravel(sqrt_Lambdas * (jnp.exp(lnq_pars) - q0s))])
 
-def one_element_q_step(lnAs, alldata, sqrt_ivars, knot_xs, xs, sqrt_Lambdas, q0s,
+def one_element_q_step(lnAs, alldata, sqrt_ivars, L, xs, sqrt_Lambdas, q0s,
                        fixed, init):
     """
     ## inputs
     - `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
     - `alldata`: shape `(N, )` log_10 abundance measurements
     - `sqrt_ivars`: shape `(N, )` inverse errors on the data
-    - `knot_xs`: shape `(Nknot, )` metallicity bin centers
+    - `L`: xrange
     - `xs` : shape `(N, )` metallicities to use with `metallicities`
     - ... 
 
     ## outputs
-    shape `(K, Nknot)` best-fit natural-logarithmic process elements
+    shape `(K, J)` best-fit natural-logarithmic process elements
 
     ## bugs
     - Uses the `fixed` input incredibly stupidly, because Hogg SUX.
@@ -113,12 +112,12 @@ def one_element_q_step(lnAs, alldata, sqrt_ivars, knot_xs, xs, sqrt_Lambdas, q0s
     - Check out the crazy `maxiter` input!
     """
     solver = jaxopt.GaussNewton(residual_fun=one_element_chi, maxiter=4)
-    lnqs_init = init.copy()
-    chi2_init = np.sum(one_element_chi(lnqs_init, lnAs, alldata, sqrt_ivars, 
-                       knot_xs, xs, sqrt_Lambdas, q0s) ** 2)
-    res = solver.run(lnqs_init, lnAs=lnAs, alldata=alldata, sqrt_ivars=sqrt_ivars,
-                     knot_xs=knot_xs, xs=xs,
+    lnq_pars_init = init.copy()
+    chi2_init = np.sum(one_element_chi(lnq_pars_init, lnAs, alldata, sqrt_ivars, 
+                       L, xs, sqrt_Lambdas, q0s) ** 2)
+    res = solver.run(lnq_pars_init, lnAs=lnAs, alldata=alldata, sqrt_ivars=sqrt_ivars,
+                     L=L, xs=xs,
                      sqrt_Lambdas=sqrt_Lambdas, q0s=q0s)
     chi2_res = np.sum(one_element_chi(res.params, lnAs, alldata, sqrt_ivars, 
-                      knot_xs, xs, sqrt_Lambdas, q0s) ** 2)
-    return jnp.where(fixed, lnqs_init, res.params), chi2_init - chi2_res
+                      L, xs, sqrt_Lambdas, q0s) ** 2)
+    return jnp.where(fixed, lnq_pars_init, res.params), chi2_init - chi2_res

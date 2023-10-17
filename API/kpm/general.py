@@ -9,7 +9,7 @@ def get_lnqs(fixed, fit):
     """
     see `internal_get_lnqs` for actual information.
     """
-    return internal_get_lnqs(fit.lnq_pars, fixed.xlim[1] - fixed.xlim[0], fixed.xs)
+    return internal_get_lnqs(fit.lnq_pars, fixed.L, fixed.xs)
 
 ## Not needed 
 # def get_processes(K):
@@ -41,7 +41,8 @@ def fourier_sum(amps, argument):
              + amps[2*j]     * jnp.sin(j * argument)
     return foo
 
-fourier_sum_orama = vmap(vmap(fourier_sum, in_axes=(0, None), out_axes=1), in_axes=(0, None), out_axes=0)
+fourier_sum_orama = vmap(vmap(fourier_sum, in_axes=(0, None), out_axes=1), \
+    in_axes=(0, None), out_axes=0)
 
 def internal_get_lnqs(lnq_pars, L, xs):
     """

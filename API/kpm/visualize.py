@@ -18,8 +18,8 @@ def plot_qs(data, fixed, fit):
     - Assumes a rigid structure for the processes?
     - Need to set size and number of subplots based on number of elements
     """
-    MgH = np.linspace(np.min(fixed.knot_xs[0]), np.max(fixed.knot_xs[0]), 300) # plotting xs
-    new_qs = np.exp(internal_get_lnqs(fixed.K, fit.lnqs, fixed.knot_xs, MgH)) # interp to plotting xs
+    MgH = np.linspace(fixed.xlim[0], fixed.xlim[1], 300) # plotting xs
+    new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH)) # interp to plotting xs
     # w22_MgH = w22_metallicities
     # w22_qs = np.exp(w22_lnqs)
 
@@ -45,7 +45,7 @@ def plot_qs(data, fixed, fit):
           plt.plot(MgH, new_q4, 'c-', alpha=0.9, label='q4')
 
         plt.xlabel('[Mg/H]')
-        plt.xlim(np.min(fixed.knot_xs), 0.55) #np.max(knot_xs))
+        plt.xlim(np.min(fixed.xs), np.max(fixed.xs))
         plt.ylabel('q '+data.elements[i])
         plt.ylim(-0.15, 1.5)
 

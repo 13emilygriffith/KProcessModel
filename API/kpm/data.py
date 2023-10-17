@@ -201,21 +201,16 @@ class fixed_params:
 	q_CC_Fe: int
 		Value of q_CC for Ia_element at Z=0. 
 		Default is 0.4
-	dq_CC_Fe_dZ: int
-		Value of slope in q_CC for Ia_element with respect to Z. 
-		Default is 0.0
 	xs: numpy array shape(N)
 		Metallicity values for each item. Default is [Mg/H]
-	Nknot: int
-		Number of knots in the spine for the process vectors
-	knot_xs: numpy array shape(K, Nknot)
-		Array of knots for each process. Default is values at 'Nknot' linearly
-		spaced percintiles of 'xs'
+	J: int
+		Number of parameters in lnq_par model (only odd used)
+	xlim: numpy array shape(2)
+		min and max of xs
+		**** what we care about
 
 	Class Methods
 	-------------
-	update_knot_xs: function
-		User can suply their own array of knots
 		
 	
 	TO DO 
@@ -225,7 +220,7 @@ class fixed_params:
 	
 	def __init__(self, data, K=2, Lambda_a=1.e6, Lambda_c=1.e3,
 				 Lambda_d=1.e3, CC_elem='Mg', Ia_elem='Fe', 
-				 q_CC_Fe=0.4, dq_CC_Fe_dZ=0.0, Nknot=10):
+				 q_CC_Fe=0.4, J=9):
 		
 		if isinstance(K, int): pass
 		else:
@@ -274,16 +269,12 @@ class fixed_params:
 			raise ValueError("Atrribute 'q_CC_Fe' must lie between 0 and 1."
 				"Got %.2f" % (q_CC_Fe))
 			
-		if isinstance(dq_CC_Fe_dZ, float): pass
-		elif isinstance(dq_CC_Fe_dZ, int): dq_CC_Fe_dZ = float(dq_CC_Fe_dZ)
+		if isinstance(J, int): pass
 		else:
-			raise TypeError("Attribute 'dq_CC_Fe_dZ' must be a float. Got: %s" 
-				% (type(dq_CC_Fe_dZ)))
-
-		if isinstance(Nknot, int): pass
-		else:
-			raise TypeError("Attribute 'Nknot' must be an int. Got: %s" 
-				% (type(Nknot)))
+			raise TypeError("Attribute 'J' must be an int. Got: %s" 
+				% (type(J)))
+		if J%2==0: raise warnings.warn("The number of parameters in the q \
+			model must be odd. Got J= %f, using %f" % (J, J-1))
 		
 		
 		self._K = K
@@ -294,8 +285,7 @@ class fixed_params:
 		self._CC_elem = CC_elem
 		self._Ia_elem = Ia_elem
 		self._q_CC_Fe = q_CC_Fe
-		self._dq_CC_Fe_dZ = dq_CC_Fe_dZ
-		self._Nknot = Nknot
+		self._J = J
 		
 		self._id_CC = np.where(data.elements==CC_elem)[0][0]
 		self._id_Ia = np.where(data.elements==Ia_elem)[0][0]
@@ -309,8 +299,8 @@ class fixed_params:
 
 		self._xs = data.alldata[:,self._id_CC]
 
-		self._knot_ps = np.percentile(self._xs, np.linspace(0,100,Nknot))
-		self._knot_xs = np.ones([self._K, self._Nknot]) * self._knot_ps
+		self._xlim =  np.percentile(self._xs, [1,99]) #hack
+		self._L = self._xlim[0] - self._xlim[1]
 		
 	def __repr__(self):
 		attrs = {
@@ -319,11 +309,11 @@ class fixed_params:
 			"CC element":		self._CC_elem,
 			"Ia element":		self._Ia_elem,
 			"q_CC_Fe":			self._q_CC_Fe,
-			"dq_CC_Fe_dZ":		self._dq_CC_Fe_dZ,
-			"Number of knots":	self._Nknot,
+			"J":				self._J,
 			"Lambda a":			self._Lambda_a,
 			"Lambda c":			self._Lambda_c,
-			"Lambda_d":			self._Lambda_d
+			"Lambda_d":			self._Lambda_d,
+			"xlim":				self._xlim
 		}
 
 		rep = "kpm.fixed_params{\n"
@@ -340,7 +330,6 @@ class fixed_params:
 		return self._K
 
 	@K.setter
-	#Note that if you change K the knots and processes auto reset 
 	def K(self, value):
 		if isinstance(value, int): pass
 		else: raise TypeError("Attribute 'K' must be an int. Got: %s" 
@@ -349,8 +338,6 @@ class fixed_params:
 			raise ValueError("Atrribute 'K' cannot exceed 4. Got %d" % (value))
 		self._K = value
 		self._processes = self._processes_all[:self._K]
-		self._knot_xs = np.ones([self._K, self._Nknot]) * self._knot_ps
-
 	
 	@property
 	def processes_all(self):
@@ -452,19 +439,6 @@ class fixed_params:
 			raise ValueError("Atrribute 'q_CC_Fe' must lie between 0 and 1."
 				"Got %.2f" % (value))
 		self._q_CC_Fe = value
-	
-	@property
-	def dq_CC_Fe_dZ(self):
-		return self._dq_CC_Fe_dZ
-	
-	@dq_CC_Fe_dZ.setter
-	def dq_CC_Fe_dZ(self, value):
-		if isinstance(value, float): pass
-		elif isinstance(value, int): value = float(value)
-		else:
-			raise TypeError("Attribute 'dq_CC_Fe_dz' must be a float. Got: %s" 
-				% (type(value)))
-		self._dq_CC_Fe_dZ = value
 		
 	@property
 	def id_CC(self):
@@ -479,50 +453,43 @@ class fixed_params:
 		return self._xs
 
 	@property
-	def Nknot(self):
-		return self._Nknot
+	def J(self):
+		return self._J
 	
-	@Nknot.setter
-	def Nknot(self, value):
+	@J.setter
+	def J(self, value):
 		if isinstance(value, int): pass
 		else:
-			raise TypeError("Attribute 'Nknot' must be an int. Got: %s" 
+			raise TypeError("Attribute 'J' must be an int. Got: %s" 
 				% (type(value)))
-		self._Nknot = value
-		self._knot_ps = np.percentile(self._xs, np.linspace(0,100,value))
-		self._knot_xs = np.ones([self._K, value]) * self._knot_ps
-		print('Resetting knot_xs')
+		if J%2==0: raise warnings.warn("The number of parameters in the q \
+			model must be odd. Got J= %f, using %f" % (J, J-1))
+		self._J = value
+
 
 	@property
-	def knot_xs(self):
-		return self._knot_xs
+	def xlim(self):
+		return self._xlim
 
-	@knot_xs.setter
-	def knot_xs(self, value):
+	@xlim.setter
+	def xlim(self, value):
 
 		if isinstance(value, np.ndarray): pass
 		else: 
-			raise TypeError("Attribute 'knot_xs' must be an array. Got: %s" 
+			raise TypeError("Attribute 'xlim' must be an array. Got: %s" 
 				% (type(value)))
+		if len(value)==2: pass
+		else: 
+			raise TypeError("Attribute 'xlim' must have length 2. Got: %f" 
+				% (len(value)))
 
-		if np.shape(value)[0] != self._K: 
-			raise ValueError("Attribute 'knot_xs' must have %s rows. Got: %s" % (self._K, np.shape(value)[0]))
+		#Check that xlim overlaps with xs!!!!
+		self._xlim = value
+		self._L = value[0] - value[1]
 
-		for i in range(np.shape(value)[0]):
-			for j in range(np.shape(value)[1]-1):
-				if value[i,j+1] > value[i,j]: pass
-				else: raise ValueError("Attribute 'knot_xs' is not in sequential order")
-
-		for i in range(np.shape(value)[0]):
-			if value[i,0] > np.max(self._xs): 
-				raise ValueError("Lower limit of attribute 'knot_xs' lies above the max 'xs' value of %f" 
-					% np.max(self._xs))
-			if value[i,-1] < np.min(self._xs): 
-				raise ValueError("Upper limit of attribute 'knot_xs' lies below the min 'xs' value of %f" 
-					% np.min(self._xs))
-
-		self._knot_xs = value
-		self._Nknot = np.shape(value)[1]
+	@property
+	def L(self):
+		return self._L
 
 class fit_params:
 	"""
@@ -534,23 +501,23 @@ class fit_params:
 
 	def __init__(self, data, fixed):
 
-		lnqs = np.zeros((fixed.K, fixed.Nknot, data.M))
+		lnq_pars = np.zeros((fixed.K, fixed.J, data.M))
 		lnAs = np.zeros((fixed.K, data.N))
 
-		self._lnqs = lnqs
+		self._lnq_pars = lnq_pars
 		self._lnAs = lnAs 
 
 	@property
-	def lnqs(self):
-		return self._lnqs
+	def lnq_pars(self):
+		return self._lnq_pars
 
 	@property
 	def lnAs(self):
 		return self._lnAs
 
-	@lnqs.setter
-	def lnqs(self, value):
-		self._lnqs = value
+	@lnq_pars.setter
+	def lnq_pars(self, value):
+		self._lnq_pars = value
 
 	@lnAs.setter
 	def lnAs(self, value):

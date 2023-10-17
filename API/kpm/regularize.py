@@ -42,16 +42,18 @@ class regularizations:
 
 		def __init__(self, data, fixed, init_q = 0.1):
 
-			q_array = np.zeros((fixed.K, fixed.Nknot, data.M))
+			q_array = np.zeros((fixed.K, fixed.J, data.M))
 			Lambdas = q_array + fixed.Lambda_c
-			q0s = q_array + init_q
+			q0s = q_array 
+			q0s[:,0,:] += init_q
 			fixed_q = q_array.astype(bool)
 
 			# 1: Strongly require that q_X = 1 for CC process for CC_elem
 			proc = fixed.processes == "CC"
 			elem = data.elements == fixed.CC_elem
 			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 1.0
+			q0s[    proc, :, elem] = 0.0
+			q0s[    proc, 0, elem] = 1.0
 			fixed_q[  proc, :, elem] = True
 
 			# 2: Require that q_X = 0 for ALL except CC process for CC_elem
@@ -65,20 +67,22 @@ class regularizations:
 			proc = fixed.processes == "CC"
 			elem = data.elements == fixed.Ia_elem
 			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = fixed.q_CC_Fe + fixed.dq_CC_Fe_dZ * fixed.knot_xs[proc]
+			q0s[    proc, :, elem] = 0.0
+			q0s[    proc, 0, elem] = fixed.q_CC_Fe 
 			fixed_q[  proc, :, elem] = True
 
 			# 4: Strongly require that q_X sum to 1 for Ia_elem
 			proc = fixed.processes == "Ia"
 			elem = data.elements == fixed.Ia_elem
 			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 1.0 - (fixed.q_CC_Fe + fixed.dq_CC_Fe_dZ * fixed.knot_xs[proc])
+			q0s[    proc, :, elem] = 0.0
+			q0s[    proc, 0, elem] = 1.0 - fixed.q_CC_Fe
 			fixed_q[  proc, :, elem] = True
 
 			self._init_q = init_q
 			self._Lambdas = Lambdas
 			self._q0s = q0s
-			self._lnq0s = np.log(np.clip(q0s, 1.e-7, None))
+			self._lnq_par0s = np.log(np.clip(q0s, 1.e-7, None))
 			self._fixed_q = fixed_q
 
 		@property
@@ -94,8 +98,8 @@ class regularizations:
 			return self._q0s
 
 		@property
-		def lnq0s(self):
-			return self._lnq0s
+		def lnq_par0s(self):
+			return self._lnq_par0s
 
 		@property
 		def fixed_q(self):

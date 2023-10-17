@@ -24,14 +24,14 @@ def initialize_2(data, fixed):
 	regs = regularizations(data, fixed)
 	fit = fit_params(data, fixed)
 
-	fit.lnqs = jnp.where(regs.Q.fixed_q, regs.Q.lnq0s, fit.lnqs)
+	fit.lnq_pars = jnp.where(regs.Q.fixed_q, regs.Q.lnq_par0s, fit.lnq_pars)
 
 	I = [el in [fixed.CC_elem, fixed.Ia_elem] for el in data.elements]
-	fit.lnAs, _ = A_step(data, fixed, fit.lnqs, fit.lnAs, I=I)
+	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=I)
 	print("initialize_2():", np.median(fit.lnAs[1:] - fit.lnAs[0], axis=1))
 
-	fit.lnqs, _ = q_step(data, fixed, fit.lnqs, fit.lnAs)
-	fit.lnAs, _ = A_step(data, fixed, fit.lnqs, fit.lnAs)
+	fit.lnq_pars, _ = q_step(data, fixed, fit.lnq_pars, fit.lnAs)
+	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs)
 	print("initialize_2():", np.median(fit.lnAs[1:] - fit.lnAs[0], axis=1))
 
 	data.allivars = inflate_ivars(data, fixed, fit, Q=7)
@@ -56,8 +56,8 @@ def run_kpm(data, fixed, file_path, name='kpm_allstars', N_rounds=3, N_itters=16
     # Need to update so if early file is missing but later isn't it reruns whole thing
     data, fit = initialize_2(data, fixed)
 
-    pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_CC_Fe)+'_dq'+str(fixed.dq_CC_Fe_dZ)
-
+    pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_CC_Fe)
+    
     # run round of itterations
     for r in range(N_rounds):
         pik_name = pik_suffix + '_' + str(r) + '.out'
