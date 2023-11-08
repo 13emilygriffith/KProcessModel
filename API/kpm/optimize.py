@@ -115,9 +115,10 @@ def objective_A(data, fixed, lnq_pars, lnAs):
 def Aq_step(data, fixed, fit):
     """
     ## Bugs:
-    - This contains multiple hacks.
+    - This contains multiple hacks, especially the noisification hack.
     - Maybe some of the hacks should be pushed back into the A-step and
       the q-step?
+    - Relies on terrible global variables.
     """
     prefix = "Aq-step():"
 
@@ -127,8 +128,8 @@ def Aq_step(data, fixed, fit):
     old_lnAs = jnp.where(jnp.isnan(fit.lnAs), 1., fit.lnAs)
     old_lnq_pars = fit.lnq_pars
     
-
-    # add noise
+    # add noise -- this is a hack to escape possible local minima.
+    # Note the use of logaddexp, so things are non-intuitive here.
     A_noise = _LN_NOISE + np.log(_RNG.uniform(size=old_lnAs.shape))
     init_lnAs = jnp.logaddexp(old_lnAs, A_noise)
     q_noise = _LN_NOISE + np.log(_RNG.uniform(size=old_lnq_pars.shape))
@@ -158,22 +159,16 @@ def Aq_step(data, fixed, fit):
     print(old_objective, objective1, objective2, objective3, objective4)
     if objective4 < old_objective:
         print(prefix, "we took a step!", _LN_NOISE, objective4, old_objective - objective4)
-        #return new_lnAs, new_lnqs, np.around(_LN_NOISE + 0.1, 1)	why return noise?
+	# If we took a step, then we can be more aggressive with the noise we are adding (see above).
+	_LN_NOISE = np.around(_LN_NOISE + 0.1, 1) # Gross global variable!
         fit.lnq_pars = new_lnq_pars
         fit.lnAs = new_lnAs
 
     else:
         print(prefix, "we didn't take a step :(", _LN_NOISE, old_objective, old_objective - objective4)
-        #return old_lnAs.copy(), old_lnqs.copy(), np.around(ln_noise - 1.0, 1)	 why return noise?
-        # Can we just return original class?
+        # If we didn't take a step, maybe it's because we added too much noise (see above)?
+	_LN_NOISE = np.around(_LN_NOISE - 1.0, 1)
         fit.lnq_pars = old_lnq_pars.copy()
         fit.lnAs = old_lnAs.copy()
 
     return fit
-
-
-
-
-
-
-
