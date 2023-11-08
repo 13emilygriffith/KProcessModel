@@ -6,10 +6,10 @@ import pickle
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 
-from .general import internal_get_lnqs, all_stars_KPM
+from .general import internal_get_lnqs, all_stars_KPM, all_stars_fcc
 from ._globals import _RNG2
 
-__all__ = ["plot_qs", "plot_As", "plot_model_abundances"]
+__all__ = ["plot_qs", "plot_As", "plot_model_abundances", "plot_fcc", "plot_chi2"]
 
 
 def plot_qs(data, fixed, fit):
@@ -18,14 +18,14 @@ def plot_qs(data, fixed, fit):
     - Assumes a rigid structure for the processes?
     - Need to set size and number of subplots based on number of elements
     """
-    MgH = np.linspace(fixed.xlim[0], fixed.xlim[1], 300) # plotting xs
+    MgH = np.linspace(fixed.xlim[0]-0.2, fixed.xlim[1]+0.2, 300) # plotting xs
     new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH)) # interp to plotting xs
     # w22_MgH = w22_metallicities
     # w22_qs = np.exp(w22_lnqs)
 
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=(15, 2.5*data.M//4+1))
     for i in range(data.M):
-        plt.subplot(4,4,i+1)
+        plt.subplot(data.M//4+1,4,i+1)
         new_qcc = new_qs[0,:,i]
         new_qIa = new_qs[1,:,i]
         # w22_qcc = w22_qs[0,:,i]
@@ -111,3 +111,61 @@ def plot_model_abundances(data, fixed, fit, noise=False):
             ax.set_title('dimensionless residual')
 
     plt.tight_layout()
+
+def plot_fcc(data, fixed, fit):
+
+    plt.figure(figsize=(15, 2.5*data.M//4+1))
+
+    fcc = all_stars_fcc(fixed, fit)
+    for i in range(data.M):
+        plt.subplot(data.M//4+1,4,i+1)
+
+        plt.hist2d(fixed.xs, fcc[0,:,i], norm=LogNorm(), bins=100, range=[[-2,0.4],[-0.1,1.1]],
+            cmap='magma')
+
+        plt.xlabel('[Mg/H]')
+        plt.ylabel('f_cc '+ data.elements[i])
+        plt.ylim(-0.05,1.05)
+        if i ==0: plt.legend(fontsize=10)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_chi2(data, fixed, fit_list, color_list, label_list):
+
+    f, (ax0, ax1) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [1, 3]}, figsize=(10,3))
+
+    for fit, color, label in zip(fit_list,color_list, label_list):
+
+        synthdata = all_stars_KPM(fixed, fit)
+
+        chi2_stars = np.sum(((data.alldata - synthdata)**2) * data.allivars, axis=1)
+        chi2_elems = np.sum(((data.alldata - synthdata)**2) * data.allivars, axis=0)
+
+        count, bins_count = np.histogram(chi2_stars, bins=1000)
+        pdf = count / sum(count)
+        cdf = np.cumsum(pdf)
+        ax0.plot(cdf, np.log10(bins_count[1:]), label=label, lw=1, color=color)
+
+        ax1.plot(fixed.elements, chi2_elems,
+            'o-', color=color, lw=1, label=label)
+
+    ax0.set_xlabel(r'N$_{*}$/N$_{\rm total}$', fontsize=12)
+    ax0.set_ylabel(r'log $\chi^2$', fontsize=12)
+    ax0.set_ylim(0.75,2.5)
+
+    ax1.set_ylabel(r'$\chi^2$ per element', fontsize=12)
+    plt.legend(loc='best', fontsize=11)
+
+    plt.tight_layout()
+
+
+
+
+    
+    
+
+
+
+
+

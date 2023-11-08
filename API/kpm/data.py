@@ -198,6 +198,10 @@ class fixed_params:
 		index of CC_element in AbundData.elements array
 	id_Ia: int
 		index of Ia_element in AbundData.elements array
+	A_list: array
+		list of element names used in the A step
+	I: array
+		same lenfth as data.elements, list of true/false if elem is in A_list
 	q_CC_Fe: int
 		Value of q_CC for Ia_element at Z=0. 
 		Default is 0.4
@@ -218,7 +222,7 @@ class fixed_params:
 	- dictionary of elements and ids for each process?
 	"""
 	
-	def __init__(self, data, K=2, Lambda_a=1.e6, Lambda_c=1.e3,
+	def __init__(self, data, A_list, K=2, Lambda_a=1.e6, Lambda_c=1.e3,
 				 Lambda_d=1.e3, CC_elem='Mg', Ia_elem='Fe', 
 				 q_CC_Fe=0.4, J=9):
 		
@@ -259,6 +263,18 @@ class fixed_params:
 		if Ia_elem not in data.elements:
 			raise ValueError("Attribute 'Ia_elem' %s is not in \
 				AbundData.elements" % (CC_elem))
+
+		if isinstance(A_list, np.ndarray): pass
+		else:
+			raise TypeError("Attribute 'elements' must be a numpy array."
+				"Got: %s" % (type(A_list)))
+		
+		if len(A_list)>0: pass
+		else:
+			raise TypeError("The array 'A_list' must contain at least one"
+				"item. Got empty array")
+		## Need to check that all are in data.elements!!
+		## Need to check that CC_elem and Ia_elem are in A_list!!
 			
 		if isinstance(q_CC_Fe, float): pass
 		elif isinstance(q_CC_Fe, int): q_CC_Fe = float(q_CC_Fe)
@@ -289,6 +305,7 @@ class fixed_params:
 		
 		self._id_CC = np.where(data.elements==CC_elem)[0][0]
 		self._id_Ia = np.where(data.elements==Ia_elem)[0][0]
+		self._elements = data.elements
 
 		self._processes = self._processes_all[:K]
 
@@ -298,9 +315,13 @@ class fixed_params:
 		self._sqrt_Lambda_A = sqrt_Lambda
 
 		self._xs = data.alldata[:,self._id_CC]
+		self._alldata =data.alldata # THIS SEEMS BAD
 
 		self._xlim =  np.percentile(self._xs, [1,99]) #hack
 		self._L = self._xlim[0] - self._xlim[1]
+
+		self._A_list = A_list
+		self._I = [el in A_list for el in data.elements]
 		
 	def __repr__(self):
 		attrs = {
@@ -390,6 +411,7 @@ class fixed_params:
 	@property
 	def sqrt_Lambda_A(self):
 		return self._sqrt_Lambda_A
+
 	
 	@property
 	def CC_elem(self):
@@ -401,12 +423,12 @@ class fixed_params:
 		else:
 			raise TypeError("Attribute 'CC_elem' must be an str. Got: %s" 
 				% (type(value)))
-		if CC_elem not in data.elements:
+		if value not in self._elements:
 			raise ValueError("Attribute 'CC_elem' %s is not in"
 				"abund_data.elements" % (value))
 		self._CC_elem = value
-		self._id_CC = np.where(data.elements==value)[0][0]
-		self._xs = data.alldata[:,self._id_CC]
+		self._id_CC = np.where(self._elements==value)[0][0]
+		self._xs = self._alldata[:,self._id_CC]
 	
 	@property
 	def Ia_elem(self):
@@ -418,11 +440,11 @@ class fixed_params:
 		else:
 			raise TypeError("Attribute 'Ia_elem' must be an str. Got: %s" 
 				% (type(value)))
-		if value not in data.elements:
+		if value not in self._elements:
 			raise ValueError("Attribute 'Ia_elem' %s is not in"
 				"abund_data.elements" % (value))
 		self._Ia_elem = value
-		self._id_Ia = np.where(data.elements==value)[0][0]
+		self._id_Ia = np.where(self._elements==value)[0][0]
 	
 	@property
 	def q_CC_Fe(self):
@@ -473,6 +495,7 @@ class fixed_params:
 
 	@xlim.setter
 	def xlim(self, value):
+		print('reseting xlims!!!!!!!')
 
 		if isinstance(value, np.ndarray): pass
 		else: 
@@ -490,6 +513,22 @@ class fixed_params:
 	@property
 	def L(self):
 		return self._L
+
+	@property
+	def A_list(self):
+		return self._A_list
+
+	@A_list.setter
+	def A_list(self, value):
+		#ADD WARNING FLAGS
+		I = [el in value for el in data.elements]
+		self._A_list = value 
+		self._I = I
+
+	@property
+	def I(self):
+		return self._I
+	
 
 class fit_params:
 	"""

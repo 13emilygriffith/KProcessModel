@@ -122,9 +122,11 @@ def Aq_step(data, fixed, fit):
     prefix = "Aq-step():"
 
     # fix old_lnAs
+    old_objective = objective_A(data, fixed, fit.lnq_pars, fit.lnAs)
+
     old_lnAs = jnp.where(jnp.isnan(fit.lnAs), 1., fit.lnAs)
     old_lnq_pars = fit.lnq_pars
-    old_objective = objective_A(data, fixed, old_lnq_pars, old_lnAs)
+    
 
     # add noise
     A_noise = _LN_NOISE + np.log(_RNG.uniform(size=old_lnAs.shape))
@@ -145,7 +147,7 @@ def Aq_step(data, fixed, fit):
 
     # run A step
     objective3 = objective_A(data, fixed, new_lnq_pars, init_lnAs)
-    new_lnAs, _ = A_step(data, fixed, new_lnq_pars, init_lnAs)
+    new_lnAs, _ = A_step(data, fixed, new_lnq_pars, init_lnAs, I=fixed.I)
     objective4 = objective_A(data, fixed, new_lnq_pars, new_lnAs)
     if objective4 > objective3:
         print(prefix, "A-step WARNING: objective function got worse:", objective3, objective4)

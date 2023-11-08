@@ -38,6 +38,8 @@ class regularizations:
 		Add Text
 
 		TO DO: ADD For K>2
+		# q0s array is confusing. First element is the value of a flat line
+		  subsequent values are the coefficients of cos/sin to deviate away 
 		"""
 
 		def __init__(self, data, fixed):

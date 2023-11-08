@@ -51,3 +51,28 @@ def internal_get_lnqs(lnq_pars, L, xs):
     """
     tmp = jnp.swapaxes(lnq_pars, 1, 2)
     return fourier_sum_orama(tmp, xs / L)
+
+def all_stars_fcc(fixed, fit):
+    """
+    ## inputs
+    - `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
+    - `lnqs`: shape `(K, Nbin, M)` natural-logarithmic processes
+    - `proc`: str (CC, IA, AGB, or fourth)
+
+    ## outputs
+    shape `(M, )` fcc
+
+    """
+    lnqs = get_lnqs(fixed, fit)
+    Acc_qcc = np.exp(fit.lnAs[0,:,None])*np.exp(lnqs[0,:,:])
+    AIa_qIa = np.exp(fit.lnAs[1,:,None])*np.exp(lnqs[1,:,:])
+    denom = Acc_qcc + AIa_qIa
+    # if fixed.K==4:
+    #   Aagb_qagb = np.exp(lnAs[2,:,None])*np.exp(lnqs[2,:,:])
+    #   A4_q4 = np.exp(lnAs[3,:,None])*np.exp(lnqs[3,:,:])
+    #   denom = Acc_qcc + AIa_qIa + Aagb_qagb + A4_q4
+
+    i = np.where(fixed.processes=='CC')[0]
+    num = np.exp(fit.lnAs[i,:,None])*np.exp(lnqs[i,:,:])
+
+    return num / denom
