@@ -168,6 +168,8 @@ class abund_data:
 
 class fixed_params:
 	"""
+	NOTES: change to hyper params
+
 	Parameters needed in KPM fitting routine
 
 	Parameters
@@ -212,6 +214,8 @@ class fixed_params:
 	xlim: numpy array shape(2)
 		min and max of xs
 		**** what we care about
+	ln_noise: int
+		log of hacky amplitude of noise used to improve the optimization
 
 	Class Methods
 	-------------
@@ -224,7 +228,7 @@ class fixed_params:
 	
 	def __init__(self, data, A_list, K=2, Lambda_a=1.e6, Lambda_c=1.e3,
 				 Lambda_d=1.e3, CC_elem='Mg', Ia_elem='Fe', 
-				 q_CC_Fe=0.4, J=9):
+				 q_CC_Fe=0.4, J=9, ln_noise=-4.0):
 		
 		if isinstance(K, int): pass
 		else:
@@ -322,6 +326,8 @@ class fixed_params:
 
 		self._A_list = A_list
 		self._I = [el in A_list for el in data.elements]
+
+		self._ln_noise = ln_noise
 		
 	def __repr__(self):
 		attrs = {
@@ -528,6 +534,14 @@ class fixed_params:
 	@property
 	def I(self):
 		return self._I
+
+	@property
+	def ln_noise(self):
+		return self._ln_noise
+
+	@ln_noise.setter
+	def ln_noise(self, value):
+		self._ln_noise = value
 	
 
 class fit_params:
