@@ -43,7 +43,7 @@
 
 \newcommand{\ejg}[1]{\textcolor{red}{EJG says: #1}}
 \newcommand{\add}[1]{\textcolor{teal}{#1}}
-
+\newcommand{\remove}[1]{\textcolor{red}{#1}}
 \newcommand{\hogg}[1]{\textcolor{blue}{Hogg says: #1}}
 
 %% Reintroduced the \received and \accepted commands from AASTeX v5.2
@@ -93,7 +93,7 @@
 \author[0000-0001-5388-0994]{Sten Hasselquist}
 \affiliation{Space Telescope Science Institute, 3700 San Martin Drive, Baltimore, MD 21218}
 
-\author[0000-0003-1124-7378]{Bridget Ratcilffe}
+\author[0000-0003-1124-7378]{Bridget Ratcliffe}
 \affiliation{Leibniz-Institut f\"{u}r Astrophysik Potsdam (AIP), An der Sternwarte 16, 
 14482 Potsdam, Germany}
 
@@ -106,15 +106,15 @@
 
 
 \begin{abstract}\noindent
-The element abundance pattern found by APOGEE and GALAH in Milky Way disk stars is close to two-dimensional, dominated by production from one prompt process and one delayed process.
-This simplicity is remarkable, since the elements are produced by a multitude of nucleosynthesis mechanisms operating in stars with a wide range of progenitor masses.
-We fit the abundances of 14 elements for 48,659 red-giant stars from APOGEE DR17 using a flexible, data-driven $K$-process model---dubbed \name.
-In our fiducial model, with $K=2$, each abundance in each star is described as the sum of a prompt and a delayed process contribution.
-We find that \name{} with $K=2$ is able to explain the abundances well, recover the observed abundance bimodality, and detect the bimodality over a greater range in metallicity than previously has been possible.
-We compare to prior work by \citet{weinberg2022}, finding that \name{} produces similar results, but that \name{} better predicts stellar abundances, especially for elements C+N and Mn and for stars at super-solar metallicities.
-The model makes assumptions, including especially that it fixes some parameters to break degeneracies and improve interpretability; we find that some of the nucleosynthetic implications are dependent upon these detailed parameter choices.
-We add a third and fourth process (to make $K=4$), finding that the additional processes give the model more freedom and improve the model's ability to predict the stellar abundances, as expected, but they don't qualitatively change the story. 
-The results of \name{} have implications for the formation of the Galaxy disk, the relationship between abundances and ages, and the physics of nucleosynthesis.
+The element abundance pattern found in Milky Way disk stars is close to two-dimensional, dominated by production from one prompt process and one delayed process. 
+This simplicity is remarkable, since the elements are produced by a multitude of nucleosynthesis mechanisms operating in stars with a wide range of progenitor masses. 
+We fit the abundances of 14 elements for 48,659 red-giant stars from APOGEE DR17 using a flexible, data-driven K-process model---dubbed \name. 
+In our fiducial model, with $K=2$, each abundance in each star is described as the sum of a prompt and a delayed process contribution. 
+We find that \name with $K=2$ is able to explain the abundances well, recover the observed abundance bimodality, and detect the bimodality over a greater range in metallicity than previously has been possible. 
+We compare to prior work by \citet{weinberg2022}, finding that \name produces similar results, but that \name better predicts stellar abundances, especially for elements C+N and Mn and for stars at super-solar metallicities. 
+The model fixes the relative contribution of the prompt and delayed process to two elements to break degeneracies and improve interpretability; we find that some of the nucleosynthetic implications are dependent upon these detailed choices. 
+We find that moving to four processes adds flexibility and improves the model's ability to predict the stellar abundances, but doesn't qualitatively change the story. 
+The results of \name will help us to interpret and constrain the formation of the Galaxy disk, the relationship between abundances and ages, and the physics of nucleosynthesis.
 \end{abstract}
 
 \keywords{Nucleosynthesis (1131), Stellar abundances (1577), Galaxy chemical evolution (580), Core-collapse supernovae (304), Type Ia supernovae (1728), }
@@ -130,14 +130,14 @@ At the present day, stellar surface abundances are not very well explained by pu
 Theoretical yields vary from data set to data set, as they are dependent on progenitor properties and explosion assumptions \citep[e.g.,][]{rybizki2017, blancato2019, buck2021, griffith2021b}. 
 The wide parameter space of progenitor and supernova models coupled with uncertainties in reaction rates and explosion physics hinder the creation of an accurate nucleosynthetic model from theory alone.
 In the long run, it is incumbent upon us to understand these issues and correct the assumptions or calculations underlying our nucleosynthetic and astrophysical models.
-In the short run, however, we gather data---tens of millions of abundance measurements on millions of stars in different astronomical surveys such as RAVE, SEGUE, LAMOST, Gaia-ESO, APOGEE/MWM, GALAH, and H3 \citep{steinmetz2006, yanny2009, gilmore2012, desilva2015, luo2015, majewski2017, conroy2019}.
+In the short run, however, we gather data---tens of millions of abundance measurements on millions of stars in different astronomical surveys such as RAVE \citep{steinmetz2006}, SEGUE \citep{yanny2009}, LAMOST \citep{luo2015}, Gaia-ESO \citep{gilmore2012, gilmore2022}, APOGEE/MWM \citep{majewski2017}, GALAH \citep{desilva2015}, and H3 \citep{conroy2019}.
 This raises the question: \emph{Can we take a data-driven approach to nucleosynthesis?}
 
 In this \documentname{}, we build a purely data-driven model for the surface element abundances observed in stars.
 We treat each star as being a linear combination of nucleosynthetic processes, beginning with one that is primarily responsible for the $\alpha$-element Mg \citep[prompt enrichment, such as core-collapse supernovae or CCSN, e.g.,][]{andrews2017}, and one that is primarily \emph{not} responsible for Mg (delayed enrichment, such as Type-Ia supernovae or SNIa).
 Beyond these up-front assumptions, we try to be agnostic about how the elements are produced.
 
-We build upon the work of \citet[][hereafter G22]{griffith2019, griffith2022} and \citet[][hereafter W19, W22]{weinberg2019, weinberg2022}, who used the bimodality in [Mg/Fe] vs. [Fe/H]\footnote{Where $[{\rm X}/{\rm Y}] = \log({\rm X}/{\rm Y}) - \log({\rm X}/{\rm Y})_{\odot}$ and $({\rm X}/{\rm Y})_{\odot}$ is the solar abundance ratio.} \citep[e.g.,][]{fuhrmann1998, bensby2003, adibekyan2012} to separate stars into populations with high and low SNIa enrichment. Using the median [X/Mg] vs. [Mg/H] abundance trends, these works explain data from the GALAH\footnote{GALAH = GALactic Archaeology with HERMES.} and SDSS-IV APOGEE\footnote{APOGEE = Apache Point Observatory Galactic Evolution Experiment, part of the Sloan Digital Sky Survey} surveys, respectively, with a two-process model. Because the median abundance trends in [X/Mg] vs. [Mg/H] space are largely insensitive to aspects of chemical evolution, such as outflows and variations in star formation history (W19), the population abundance trends are set by the nucleosynthetic processes and can be used to empirically constrain Galactic enrichment. 
+We build upon the work of \citet[][hereafter G22]{griffith2019, griffith2022} and \citet[][hereafter W19, W22]{weinberg2019, weinberg2022}, who used the bimodality in [Mg/Fe] vs. [Fe/H]\footnote{Where $[{\rm X}/{\rm Y}] = \log({\rm X}/{\rm Y}) - \log({\rm X}/{\rm Y})_{\odot}$ and $({\rm X}/{\rm Y})_{\odot}$ is the solar abundance ratio.} \citep[e.g.,][]{fuhrmann1998, bensby2003, adibekyan2012} to separate stars into populations with high and low SNIa enrichment. As established in \citet{griffith2019}, these populations are referred to as high-Ia and low-Ia, to reflect their enrichment origins, instead of the traditional low-$\alpha$ and high-$\alpha$ nomenclature. We adopt this updated naming convention in this \documentname. Using the median [X/Mg] vs. [Mg/H] abundance trends, these prior works explain data from the GALAH\footnote{GALAH = GALactic Archaeology with HERMES.} and SDSS-IV APOGEE\footnote{APOGEE = Apache Point Observatory Galactic Evolution Experiment, part of the Sloan Digital Sky Survey} surveys, respectively, with a two-process model. Because the median abundance trends in [X/Mg] vs. [Mg/H] space are largely insensitive to aspects of chemical evolution, such as outflows and variations in star formation history (W19), the population abundance trends are set by the nucleosynthetic processes and can be used to empirically constrain Galactic enrichment. 
 
 These works, as well as \citet{ting2022} and \citet{ratcliffe2023}, find that the Milky Way stellar abundances are well fit by two components, grounded in [Fe/H] and [Mg/Fe], down to residuals of 0.01 to 0.03 dex for the most precisely measured elements and 0.05 to 0.1 dex for elements (such as Na, C, and Ce) with large measurement errors. Simultaneously, \citet{frankel2018} and \citet{ness2022} have found that disk abundances are also well described by a two-component model of birth radius and age. Correlations between two-process model parameters and stellar ages and kinematics (W22) as well as the success of a two-component model of [Fe/H] and age in predicting APOGEE abundances \citep{ness2019} suggest that these two 2-dimensional models are somehow interconnected. 
 
@@ -148,7 +148,7 @@ To date, survey abundances have not been fully exploited to create a data-driven
 In this work, our main innovations are to relax the assumptions made in G22 and W22, to be more agnostic about the nucleosynthetic processes, and to be more principled with the measurements or inferences from data.
 In the $K$ Process Model (\name{}), we find the intersection between reliable facts about nucleosynthesis and good abundance measurements to build an edifice of Galactic enrichment.
 The model is hierarchical, in that it learns some parameters (process vectors) that are shared across all stars, but different for each element, and some parameters (process amplitudes) that are shared across all elements, but different for each star.
-The parameters output by our model can thus be used as de-noised abundance labels; these will sharpen relationships between abundances and stellar parameters (including birth location and time). Our main contribution is to construct a data-driven model for nucleosynthesis that has good statistical properties, only enforcing constraints to break rotational degeneracies. All other \name{} parameters are set by the data with no fixed normalization.
+The parameters output by our model can thus be used as de-noised abundance labels; these will sharpen relationships between abundances and stellar parameters (including birth location and time). Our main contribution is to construct a data-driven model for nucleosynthesis that has good statistical properties, only enforcing a small number of constraints to break the degeneracies that arise in models of this form. All other \name{} parameters are set by the data with no fixed normalization.
 
 This paper is organized as follows. In Section~\ref{sec:model} we present the assumptions and the implementation of \name{}. In Section~\ref{sec:data} we describe the APOGEE data sample employed in this paper.  We apply \name{} to the APOGEE data in Section~\ref{sec:fiducial} and compare our results to those of W22 in Section~\ref{subsec:w22}. In Section~\ref{sec:variations} we explore variations from the fiducial model, changing our assumptions about Fe production as well as the number of model components. Finally, we discuss and summarize our results in Section~\ref{sec:discussion}.
 
@@ -166,9 +166,9 @@ The observed abundance can be expressed
 \begin{equation}\label{eq:xh}
     [\text{X}_j/\text{H}]_i = m_{ij} + \text{noise},
 \end{equation}
-where ``noise'' represents observational noise and/or other sources of intrinsic abundance scatter that are not included in this model. For detailed examples of a similar model with $K=2$, see Section 2 and Figures 2 and 3 of W22.
+where ``noise'' represents observational noise and/or other sources of intrinsic abundance scatter that are not included in this model. For detailed examples of a similar model with $K=2$, see Section 2 and Figures 2 and 3 of W22, where they demonstrate the vector addition and describe the process parameters for a few example stars.
 
-In \name{}, we put forth the following set of assumptions: 
+In \name{}, we adopt the following set of assumptions: 
 
 \paragraph{1. $K$ processes}
 All elements on the periodic table are produced by a combination of nucleosynthetic processes such as CCSN, SNIa, AGB stars, and merging neutron stars \citep{johnsonja2020}. The majority of $\alpha$, light odd-$Z$, and Fe-peak elements (the elements observed by APOGEE) are dominantly produced by $K=2$ sources, with one being a prompt process or mix of prompt processes, and one being a delayed process or a mix of delayed processes. This is substantiated by theoretical yields \citep[e.g.,][]{anderson2019, rybizki2017} and past successful data-driven models (e.g., \citealp{ness2019}, G22, W22, \citealp{ting2022, ratcliffe2023}). In this paper we therefore assume that $K \geq 2$, though \name{} could in principle be implemented with $K=1$.
@@ -176,7 +176,8 @@ All elements on the periodic table are produced by a combination of nucleosynthe
 \paragraph{2. Linearity}
 At every metallicity, the (linear) (X/H) abundances of a star can be expressed as a linear combination of $K$ processes.
 These processes themselves will depend on metallicity, but a linear sum is sufficient to explain all element abundances at any overall metallicity.
-Because yields depend on stellar masses and progenitor structure, and because different stars can get to their metallicities by different histories, this assumption must be at least slightly wrong in detail.
+Because different stars can get to their metallicities by different histories, and because detailed abundances beyond metallicity must matter at some level, the true enrichment mechanism is at least slightly nonlinear; thus this assumption
+must be at least slightly wrong in detail.
 
 \paragraph{3. Non-negativity}
 All process vector components for all elements are non-negative and all process amplitudes are non-negative.
@@ -188,7 +189,7 @@ This makes the model similar to a non-negative matrix factorization (\citealt{nn
 
 \paragraph{4. Mg production}
 All Mg is produced in a prompt process and no other processes contribute to its production.
-This is substantiated by theoretical yields where Mg is purely produced by prompt CCSN \citep[e.g.,][]{anderson2019, rybizki2017}.
+This is substantiated by theoretical yields where Mg is purely produced by prompt CCSN \citep[e.g.,][]{woosley1995, arnett1996, anderson2019, rybizki2017}.
 This assumption (along with non-negativity) breaks a set of symmetries in the process space and makes the processes quasi-interpretable in terms of nucleosynthesis sources.
 Because such a prompt process is likely dominated by CCSN \citep[e.g.,][]{andrews2017}, we label the first process with ``CC''. 
 
@@ -199,7 +200,7 @@ In \name{}, this assumption is enforced by fixing the Mg process vector componen
 at all metallicities. Equation~\ref{eq:qcc_mg_solar} also imposes that the Mg process is metallicity independent. 
 
 \paragraph{5. Fe production}
-Fe is produced through a combination of a prompt and delayed process. Because the delayed process is likely dominated by SNIa \citep[e.g.,][]{andrews2017}, we label the delayed process with ``Ia''\footnote{While other enrichment channels with similar timescales may be included in the respective processes, the ``CC'' and ``Ia'' naming convention conforms to the choices in W22 and G22, and avoids the possible confusion of process numbers (1 and 2) with supernova type (II and Ia).}.
+Fe is produced through a combination of a prompt and delayed process. Because the delayed process is likely dominated by SNIa \citep[e.g.,][]{thielemann2002, andrews2017}, we label the delayed process with ``Ia''\footnote{While other enrichment channels with similar timescales may be included in the respective processes, the ``CC'' and ``Ia'' naming convention conforms to the choices in W22 and G22, and avoids the possible confusion of process numbers (1 and 2) with supernova type (II and Ia).}.
 While the prompt process constraint (Mg) is grounded in nucleosynthesis theory, there is no equivalent nucleosynthesis fact to constrain the delayed process.
 To break model degeneracies, we also fix the Fe process vector components such that 
 
@@ -212,12 +213,12 @@ We explore the impact of different $\qccFe$ assumptions in Section~\ref{subsec:q
 
 \paragraph{6. Metallicity dependence}
 We permit the process vector components for all elements other than Mg and Fe to float as a function of metallicity.
-The variation is parameterized by a linear spline in log-process space, attached to a set of variable control points. We assume that a particular set of hard-coded knots are sufficient to capture the metallicity dependence.
+The variation is parameterized by a linear spline in log-process space, attached to a set of variable control points, knots, where the piecewise functions are joined. We assume that a particular set of 11 hard-coded knots between [Mg/H] of -0.8 and 0.6 are sufficient to capture the metallicity dependence. We choose knot number and location such that we capture the complex metallicity dependence of the abundance trends while maintaining a sufficient number of stars to fit with each linear component.
 
 \paragraph{7. APOGEE abundances and uncertainties}
 We assume that the APOGEE abundances and uncertainties can be used for this project.
 This is not the same as assuming that they are correct, but rather that it is possible and useful to build an interpretable model to explain them. We describe the potential data systematics in Section~\ref{sec:data}.
-For our purposes, we care mainly about the statistical observational errors rather than systematics that arise from imperfect modeling of the spectra such as NLTE effects, though differential systematics across the sample can artificially add abundance scatter. The actual derived values of $q_{k,j}^{Z}$ will be affected by systematic offsets in the abundances. We add a softening parameter $Q$ (Equation~\ref{eq:inflate_ivar}) to allow for the possibility that APOGEE observational errors are underestimated or that there is intrinsic scatter around the \name{} predictions.
+For our purposes, we care mainly about the statistical observational errors rather than systematics that arise from imperfect modeling of the spectra such as NLTE effects, though differential systematics across the sample can artificially add abundance scatter. The actual derived values of $q_{k,j}^{Z}$ will be affected by systematic offsets in the abundances. We add a softening parameter $Q$ (Equation~\ref{eq:inflate_ivar}) to allow for the possibility that APOGEE observational errors are underestimated, or that there is intrinsic scatter around the \name{} predictions.
 
 \paragraph{8. Robust likelihood function}
 The observed value of [X/H] can be described as the $K$ process expected value plus observational noise and/or other sources of intrinsic abundance scatter, as described by Equation~\ref{eq:xh}.
@@ -232,7 +233,7 @@ Because we don't want to be too drawn or influenced by outlier points, we don't 
 \begin{equation}\label{eq:inflate_ivar}
     \frac{1}{\sigma_{ij}^2} = \frac{Q^2/\sigma_{{\rm obs},ij}^2}{Q^2 + (\xh_{ij} - m_{ij})^2 /\sigma_{{\rm obs},ij}^2 },    
 \end{equation}
-where $Q$ is a softening parameter. Our results are largely insensitive to the choice of $Q$ (e.g., $1 < Q < 10$), so we choose to set $Q=5$. Very small values (e.g., $Q=.1$) will erase some of the abundance structure and produce poorer fits.
+where $Q$ is a softening parameter. Our results are largely insensitive to the choice of $Q$. We find that the predicted abundances of all elements change by less than 0.01 dex for Q between 1 and 10, so we choose to set $Q=5$. Very small Q values (e.g., $Q=.1$) will erase some of the abundance structure and produce poorer fits.
 
 \paragraph{9. Implementation and optimization} 
 With the above assumptions in place, the likelihood function can be optimized to a set of stellar abundances.
@@ -260,10 +261,10 @@ For our stellar sample, we select a subset of APOGEE DR17 stars with the goal of
 \end{itemize}
 To eliminate red clump (RC) stars, which show abundance variations from the RGB sample \citep{vincenzo2021a}, we cross-match with and remove stars that appear in the APOGEE DR17 RC VAC\footnote{\url{https://www.sdss4.org/dr17/data_access/value-added-catalogs/?vac_id=apogee-red-clump-(rc)-catalog}} \citep{bovy2014}. 
 
-These cuts result in a sample of 48,659 stars that span the Galactic disk. We plot their $Z$ vs. $R$ location, as well as the distributions of distances and eccentricities in Figure~\ref{fig:star_dist}, taking distances and kinematics from \citep{queiroz2023}. While our stellar sample extends from Galactic center, to the outer disk, to the halo, the majority of our stars ($75\%$) are within 3.5 kpc of the sun. Further, $94\%$ of our stellar sample has an eccentricity less than 0.4, indicative of \textit{in situ} origin. In this paper, we assume that the KPM fits will be consistent across the Galactic disk, as the median high-Ia and low-Ia [X/Mg] vs. [Mg/H] abundance tends are insensitive to Galactic location (W19, \citealp{griffith2021a}).  
+These cuts result in a sample of 48,659 stars that span the Galactic disk. We plot their $Z$ vs. $R$ location, as well as the distributions of distances and eccentricities in Figure~\ref{fig:star_dist}, taking distances and kinematics from \citep{queiroz2023}. While our stellar sample extends from Galactic center, to the outer disk, to the halo, the majority of our stars ($75\%$) are within 3.5 kpc of the sun. Further, $94\%$ of our stellar sample has an eccentricity less than 0.4, indicative of \textit{in situ} origin \citep[e.g.,][]{sales2009}. In this paper, we assume that the \name fits will be consistent across the Galactic disk, as the median high-Ia and low-Ia [X/Mg] vs. [Mg/H] abundance tends are insensitive to Galactic location (W19, \citealp{griffith2021a}).  While we fit a large sample of stars in this work, \name performs similarly when fitting smaller populations, down to 500 stars.
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/star_sample.pdf}
+    \includegraphics[width=\textwidth]{star_sample.pdf}
     \caption{Left: distribution of our stellar sample in $Z$ (kpc) vs. $R$ (kpc) where (0,0) is the Galactic center. Center: distribution of stellar distances (kpc). Right: distribution of stellar eccentricity. Our stellar sample spans the Galactic disk, but the majority of our stars are within 3.5 kpc of the sun and have kinematics consistent with \textit{in situ} origin.}
     \label{fig:star_dist}
 \end{figure*}
@@ -278,14 +279,14 @@ We plot the distributions of all abundances in [X/Mg] vs. [Mg/H] for our sample 
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/all_param1.pdf}
+    \includegraphics[width=\textwidth]{all_param1.pdf}
     \caption{Abundance distributions and \name{} parameters for C+N, $\alpha$, and light odd-$Z$ elements. First column: observed abundance distributions in [X/Mg] vs. [Mg/H]. Second column: The predicted [X/Mg] vs. [Mg/H] abundance distribution of the fiducial model plus estimated noise. By comparing the first two columns we can evaluate the success of \name{} in reproducing the observed abundance distributions. Third column: process vector components $\qcc$ (thin, purple) and $\qIa$ (thick, orange) from this work (G23, solid, dark lines) and W22 (light, dashed lines). Overall offsets between the solid and dashed lines are driven largely by our normalization that places the [Mg/Fe] plateau at $+0.4$, rather than $+0.3$ in W22. Fourth column: distribution of fractional contribution from the prompt process ($\fcc$) predicted by the fiducial model. We plot the median $\fcc$ values of the low-Ia (orange square) and high-Ia (purple circle) populations in the solar metallicity bin from W22 for comparison. All density plots are logarithmically scaled.}
     \label{fig:all_param1}
 \end{figure*}
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/all_param2.pdf}
+    \includegraphics[width=\textwidth]{all_param2.pdf}
     \caption{Same as Figure~\ref{fig:all_param1}, but for Fe-peak elements and Ce.}
     \label{fig:all_param2}
 \end{figure*}
@@ -362,7 +363,7 @@ In addition to process vector components, each star is fit with a prompt and del
 
 \begin{deluxetable}{cccc}
     \tablecaption{Fiducial model $\Acc$ and $\AIa$ values for our stellar sample.
-    \label{tab:qIa}}
+    \label{tab:As}}
     \tablehead{
 \colhead{APOGEE ID} &	\colhead{[Mg/H]} & \colhead{$\Acc$} &	\colhead{$\AIa$}} 
 \startdata
@@ -378,14 +379,14 @@ In addition to process vector components, each star is fit with a prompt and del
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/As.pdf}
+    \includegraphics[width=\textwidth]{As.pdf}
     \caption{Left: distribution of $\AIa/\Acc$ vs. $\Acc$ for the fiducial model. This plot is similar to a [Fe/Mg] vs. [Mg/H] distribution where $\AIa/\Acc$ is a proxy for [Fe/Mg] and $\Acc$ is a proxy for [Mg/H]. Note that $\Acc = 1$ corresponds to $\mgh = 0$. Center: distribution of $\AIa/\Acc$ vs. $\mgh$. In the left and center panels, we can clearly see the bimodality to high values of $\Acc$ and $\mgh$. Both density plots are logarithmically scaled. Right: distribution of $\AIa/\Acc$ for ranges of [Mg/H] with metallicity bin increasing from top to bottom. [Mg/H] bins are of width 0.325 dex and span $-0.75$ to 0.55.}
     \label{fig:As}
 \end{figure*}
 
 With the optimized process parameters in hand, we can use Equation~\ref{eq:xh} to calculate predicted abundances for the fiducial model---the abundances our stellar population would have if the model assumptions are correct and only one prompt and one delayed process contribute. To simulate observational noise, we add an error drawn from a Gaussian distribution with $\sigma$ equal to the reported error on each abundance for each star. In Figure~\ref{fig:all_param1} and~\ref{fig:all_param2} we plot the predicted abundances plus estimated noise in the second columns. These distributions can be compared to the observed abundance distribution in the first columns.
 
-Overall, the fiducial model successfully reproduces the observed abundance distributions. It is capable of capturing metalicity dependences and bimodality. The predicted abundances plus estimated noise are not, however, able to reproduce the observed abundance scatter. This is especially noticeable for O, C+N, Na, Al, K, Co, and Ce. For these elements the scatter in the observed abundance distribution is larger than in the predicted distribution, suggesting that the APOGEE observational scatter is underestimated, that there are $\teff$ or $\logg$ dependent abundance trends (e.g., \citealp{griffith2021a}, W22), or that the $K=2$ model is insufficient--a likely case for elements produced by AGB stars, such as C+N and Ce.
+Overall, the fiducial model successfully reproduces the observed abundance distributions. It is capable of capturing metalicity dependences and bimodality. The predicted abundances plus estimated noise are not, however, able to reproduce the observed abundance scatter. This is especially noticeable for O, C+N, Na, Al, K, Co, and Ce. For these elements the scatter in the observed abundance distribution is larger than in the predicted distribution, suggesting that the APOGEE observational scatter is underestimated, that there are $\teff$ or $\logg$ dependent abundance trends (e.g., \citealp{griffith2021a}, W22), or that the $K=2$ model is insufficient--a likely case for elements produced by AGB stars, such as C+N and Ce. The model performs similarly well when the population is downsampled to 5000, 1000, and 500 stars, though the number of nodes has to be decreased from 11 to 7.
 
 \subsection{Comparing to W22}\label{subsec:w22}
 
@@ -401,7 +402,7 @@ We find that, overall, the $\chi^2$ decreases between the W22 two-process model 
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/comp_w22.pdf}
+    \includegraphics[width=\textwidth]{comp_w22.pdf}
     \caption{Left: cumulative distribution of $\log_{10}(\chi^2)$ for W22 (dashed orange line) and our fiducial model (G23, solid purple line). Right: $\chi^2$ per element for the same model fits with elements ordered by atomic number. Overall, our model has a smaller cumulative $\chi^2$ than the previous two-process model and better predicts the abundances of C+N, Na, K, Mn, Co, Ni, and Ce.}
     \label{fig:comp_w22}
 \end{figure*}
@@ -423,7 +424,7 @@ In the fiducial model, we choose $\qccFe = 0.4$ as this parameter choice is able
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/qccFe_FeMg.pdf}
+    \includegraphics[width=\textwidth]{qccFe_FeMg.pdf}
     \caption{Minimum [Fe/Mg] value attainable for $\qccFe$ and $\dqccFe$ assumptions. Left: for $\dqccFe=0$ with $\qccFe=0.5$, 0.45, 0.4, and 0.35 (light to dark purple). Right: for $\dqccFe=0.15$ with $\qccFe=0.5$, 0.4, 0.35 (light to dark orange).}
     \label{fig:qccFe_FeMg}
 \end{figure*}
@@ -432,7 +433,7 @@ We repeat the optimization of the \name{} with $K=2$ and these $\qccFe$ assumpti
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/qccFe_FeMgpred.pdf}
+    \includegraphics[width=\textwidth]{qccFe_FeMgpred.pdf}
     \caption{Top: observed [Fe/Mg] vs. [Mg/H] abundance distribution. Bottom: predicted [Fe/Mg] vs. [Mg/H] abundance distributions plus estimated noise for models with $\dqccFe=0.0$ (middle row) and $\dqccFe=0.15$ (bottom row). The $\qccFe$ value increase from left to right from 0.35 to 0.5. All density plots are logarithmically scaled. Note that the center panels have different $\qccFe$ values (middle: 0.45, bottom: 0.4) and that the predicted abundance distribution for $\qccFe=0.4$ and $\dqccFe=0.0$ can be found in Figure~\ref{fig:all_param2}. The $\qccFe$ and $\dqccFe$ parameters are listed in each panel. By comparing the lower panels to the observed distribution (top) we can evaluate the success or failure of each model; the low-Ia population is most sensitive to the Fe assumptions.}
     \label{fig:qccFe_FeMgpred}
 \end{figure*}
@@ -453,7 +454,7 @@ While the high $\qccFe$ model can likely be ruled out due to poorness of fit, th
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/qccFe_fcc.pdf}
+    \includegraphics[width=\textwidth]{qccFe_fcc.pdf}
     \caption{Elemental median values of $\fcc$ at solar metallicity for the low-Ia population for \name{} with $\qccFe=0.35$ (darkest purple) to 0.5 (lightest purple) and $\dqccFe=0.0$. Elements are ordered by atomic number. The median $\fcc$ changes most dramatically for elements with strong delayed contributions.}
     \label{fig:qccFe_fcc}
 \end{figure*}
@@ -488,14 +489,14 @@ The model converges upon a set of process vector components and amplitudes that 
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/A4s.pdf}
+    \includegraphics[width=\textwidth]{A4s.pdf}
     \caption{$A^k_i/\Acc$ vs. $\Acc$ distribution for $\AIa$ (left), $A^3_i$ (center), and $A^4_i$ (right). All density plots are logarithmically scaled. The third and fourth processes contribute most to low metallicity stars.}
     \label{fig:A4}
 \end{figure*}
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/all_param_k4.pdf}
+    \includegraphics[width=\textwidth]{all_param_k4.pdf}
     \caption{Left: [X/Mg] vs. [Mg/H] abundance distributions for the observed sample (first column), $K=2$ model (second column) and $K=4$ model (third column) for Ca, C+N, Na, Cr, Ni, Mn, Co, and Ce. Observational errors are \textit{not} added to the model predictions. All density plots are logarithmically scaled. Right: process vector components (fourth column) and median low-Ia fractional contribution from each process (fifth column) for the $K=4$ (solid lines) and $K=2$ (dashed lines) models to the low-Ia population as a function of $\mgh$. We plot the median $\qcc$ and $\fcc$ in light purple, $\qIa$ and $f^{\rm Ia}_{ij}$ in dark purple, $q^Z_{3,i}$ and $f^{3}_{ij}$ in light orange, and $q^Z_{4,i}$ and $f^{4}_{ij}$ in dark orange. In the final column we plot a dotted grey line at 0 for reference.} 
     \label{fig:all_paramK}
 \end{figure*}
@@ -520,7 +521,7 @@ With the additional components able to account for the non-Fe-like enrichment, t
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=\textwidth]{Paper/Figures/comp_Ks.pdf}
+    \includegraphics[width=\textwidth]{comp_Ks.pdf}
     \caption{Left: cumulative distribution of $\log_{10} (\chi^2)$ for the $K=2$ model (dotted light purple line) and the $K=4$ model (solid dark purple line). Right: $\chi^2$ per element for the same model fits. Elements are ordered by atomic number.}
     \label{fig:comp_Ks}
 \end{figure*}
@@ -544,7 +545,7 @@ The $K=4$ model improves the ability of \name{} to fit the abundances of all ele
 
 \name{} is based upon the two-process model developed in W19 and W22. While the two models are identical in format for the $K=2$ case, the model assumptions, parameter derivations, and implementations differ. The W22 two-process model derives process vector components from median abundance trends, reliant upon $\mgfe$ vs. $\mgh$ bimodality, and fits process amplitudes to a subset of $2-6$ $\alpha$ and Fe-peak elements. \name{}, on the other hand, employs a likelihood function fit to all stars and all elements to derive both process amplitudes and vector components. Our more data-driven implementation results in the improved ability of the $K=2$ model fit to predict all of a star's abundances. Notably, \name{} can better predict C+N and Mn abundances than the W22 two-process model, since all elements are used to constrain the fits. The most significant improvement to the original two-process model, though, is in \name{}'s flexibility. The flexible implementation of the model allows us to easily vary the assumptions, such as $\qccFe$, and increase the number of model components to study the impact of our assumptions on the results and push the interpretation of \name{} beyond standard CCSN and SNIa nucleosynthesis in a less restrictive manner than W22 and G22. 
 
-However, \name{} is not without its own faults. The assumptions listed in Section~\ref{sec:model} may incorrectly skew our results, and the model could benefit from improvements in implementation. While assumptions (4) and (5) on Mg and Fe production are flexible, \name{} requires that both elements have fixed process vector components. If our assumptions are incorrect and, for instance, Mg is not a pure prompt element or (in the $K=4$ case) Fe has contributions from multiple delayed sources, our nucleosynthetic interpretation of \name{} may be wrong. This becomes more challenging as $K$ increases and we have to make more assumptions to break rotational symmetries. Additionally, assumption (7) states that the APOGEE data products can be used for this project, but we inflate outlying-star abundance errors with a softening parameter, $Q$ to account for their likely underestimation. It is also possible that $Q$ is accounting for some of the real intrinsic scatter in the data and inflating the observational error on true outlier stars. In future \name{} implementation, the development of a more robust method to justifiably down-weight outlier stars from the global fits would be beneficial. This method should account for both non-Gaussian observational errors (e.g., from bad telluric subtraction or unlucky line blends) and physically interesting outliers (e.g., from binary mass transfer).
+However, \name{} is not without its own faults. The assumptions listed in Section~\ref{sec:model} may incorrectly skew our results, and the model could benefit from improvements in implementation. While assumptions (4) and (5) on Mg and Fe production are flexible, \name{} requires that both elements have fixed process vector components. If our assumptions are incorrect and, for instance, Mg is not a pure prompt element or (in the $K=4$ case) Fe has contributions from multiple delayed sources, our nucleosynthetic interpretation of \name{} may be wrong. This becomes more challenging as $K$ increases and we have to make more assumptions to break rotational symmetries (the symmetries in which the process amplitudes and the process vectors are transformed in corresponding ways to leave the predictions unchanged). Additionally, assumption (7) states that the APOGEE data products can be used for this project, but we inflate outlying-star abundance errors with a softening parameter, $Q$ to account for their likely underestimation. It is also possible that $Q$ is accounting for some of the real intrinsic scatter in the data and inflating the observational error on true outlier stars. In future \name{} implementation, the development of a more robust method to justifiably down-weight outlier stars from the global fits would be beneficial. This method should account for both non-Gaussian observational errors (e.g., from bad telluric subtraction or unlucky line blends) and physically interesting outliers (e.g., from binary mass transfer).
 Finally, \name{} fits process vector components along a spline with 11 knots (assumption 6), and those knots have fixed locations in metallicity.
 As this method fits a polynomial between each knot, it can result in sharp features at the knot locations in metallicity regions with few points or large scatter. Fitting process vector components with a differentiable function might be more reasonable, though results shown in Appendix C.1 in G22 suggests that this change might have minimal impact on the results. 
 In general this model for the metallicity-dependence of the yields is very rigid; a better model could both have more flexibility and be smoother.
@@ -571,26 +572,26 @@ Beyond improving the definition of high-Ia and low-Ia populations, the \name{} p
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=.9\textwidth]{Paper/Figures/pop_divis.pdf}
+    \includegraphics[width=.9\textwidth]{pop_divis.pdf}
     \caption{Left: distribution of stars in $\AIa/\Acc$ vs. [Mg/H] where the black dashed line is the dividing line between the high-Ia and low-Ia populations (Equation~\ref{eq:lowIa new}). Stars that are re-classified as high-Ia are shown in purple (647 stars) and stars that are re-classified as low-Ia are shown in orange (224 stars). Right: Same as left, but in [Mg/Fe] vs. [Fe/H] space. The high-Ia and low-Ia populations have been labeled in both panels for clarity. The symbols emphasize the stars at the edge of the populations but the re-classified stars make up only $\sim 2\%$ of the total population.}
     \label{fig:pop_divis}
 \end{figure*}
 
 Such analysis with \name{} parameters will be useful in studying nucleosynthesis, dynamics, disk formation, stellar ages, and much more. However, in this paper we only present fits for a small population with restricted stellar parameters, relative to the full APOGEE sample. 
-\ejg{Add references to tables with q values at knots and A values for all stars.} While \name{} could be fit to the full APOGEE sample, systematic abundance effects with $\teff$ and $\logg$, as well as other abundance artifacts \citep[e.g.,][]{jonsson2020, griffith2021a}, cause the abundance trends to differ across the Hertzsprung-Russell diagram. The best-fit \name{} parameters for the giants would differ from those for the dwarfs. If such systematics could be accounted for (see Sit et al. in prep) we could fit the full APOGEE stellar sample with \name{}, or train \name{} on a subset of high signal-to-noise stars and apply the fits to the full sample. This potential future analysis could reveal additional information about the nucleosynthetic history of our Galaxy and would provide higher signal-to-noise abundance labels for the full sample.
+While \name{} could be fit to the full APOGEE sample, systematic abundance effects with $\teff$ and $\logg$, as well as other abundance artifacts \citep[e.g.,][]{jonsson2020, griffith2021a}, cause the abundance trends to differ across the Hertzsprung-Russell diagram. The best-fit \name{} parameters for the giants would differ from those for the dwarfs. If such systematics could be accounted for (see Sit et al. in prep) we could fit the full APOGEE stellar sample with \name{}, or train \name{} on a subset of high signal-to-noise stars and apply the fits to the full sample. This potential future analysis could reveal additional information about the nucleosynthetic history of our Galaxy and would provide higher signal-to-noise abundance labels for the full sample.
 
 The success of the two-process model (W19, W22) and \name{} with $K=2$ suggests that the distribution of disk stars in APGOEE abundance space is largely two-dimensional (2D), though more dimensions are required to fully explain the data (\citealp{ting2022}, W22). In this paper, we have focused on a 2D nucleosynthetic model, with the two dimensions representing prompt CCSN-like enrichment and delayed SNIa-like enrichment. However, another 2D class of theoretical models for the Milky Way exists, describing stars in terms of birth radius and birth date \citep[e.g.,][]{frankel2018, ness2022}. Are these two 2D models related? If they are, then the nucleosynthetic parameters from \name{} ($\AIa$ and $\Acc$) should predict asteroseismic ages (or masses), up to unpredictable aspects of mass transfer, as well as the guiding center radius, up to unpredictable aspects of radial migration. While a deeper study of the implications of the disk's two-dimensionality is outside the scope of this work, we show the relationship between asteroseismic age from the APOKASC sample \citep{pinsonneault2018} and process amplitudes in Figure~\ref{fig:age}. Here we see a clear gradient in age with $\Acc$ and $\AIa/\Acc$ (as in G22 and W22), though outlier stars are scattered throughout. We predict that the \name{} parameters will be better age diagnostics than APOGEE abundances, and that age outliers may be mass transfer objects. 
 
 \begin{figure*}[htb!]
     \centering
-    \includegraphics[width=.6\textwidth]{Paper/Figures/AIaAcc_age.pdf}
+    \includegraphics[width=.6\textwidth]{AIaAcc_age.pdf}
     \caption{$\AIa/\Acc$ vs. $\Acc$ distribution for stars in the APOKASC sample \citep{pinsonneault2018} Each point is colored by the star's asteroseismic $\log_{10}$(age), with younger stars in black and older stars in yellow. A clear gradient with $\log_{10}$(age) and process parameters exists with young outliers scattered throughout. This shows that the process amplitudes constitute a good-quality age indicator.}
     \label{fig:age}
 \end{figure*}
 
-Finally, because of the flexibility of \name{}, new scientific applications are enabled that were not feasible before. Because \name{} does not rely on [Mg/Fe] vs. [Fe/H] bimodality, non-bimodal populations can now be fit with a multi-component nucleosynthetic model. \name{} could be applied to the low metallicity disk, halo, Gaia Enceladus Sausage, Nubecula Major, Nubecula Minor\footnote{Historically referred to as the LMC and SMC.}, other Milky Way satellites, and more. \name{} can also be easily extended to $K>2$ in a much less restricted way than the two-process model. While a $K=2$ model well describes the global abundance patterns, intrinsic residual scatter on the scale of 0.01 to 0.02 dex remains (\citealp{ting2022}, W22, G22). This scatter could be signatures of enrichment from non-CCSN/SNIa sources, stochastic sampling of the IMF, environmental IMF variations, or metallicity-dependent SN yields with a bursty star formation history \citep[e.g.][]{belokurov2022, griffith2023}. While it is difficult to identify non-CCSN or SNIa enrichment in the APOGEE data alone, where only C+N and Ce are expected to have significant contributions from other sources, there may be signatures in other surveys with better coverage of heavier elements. Applying a $K>2$ model to GALAH \citep{buder2021}, or an overlapping sample of APOGEE and GALAH stars \citep{nandakumar2022}, could prove more successful. 
+Finally, because of the flexibility of \name{}, new scientific applications are enabled that were not feasible before. Because \name{} performs well with a low number of stars and does not rely on [Mg/Fe] vs. [Fe/H] bimodality, non-bimodal populations can now be fit with a multi-component nucleosynthetic model. \name{} could be applied to the low metallicity disk, halo, Gaia Enceladus Sausage, Nubecula Major, Nubecula Minor\footnote{Historically referred to as the LMC and SMC.}, other Milky Way satellites, and more. \name{} can also be easily extended to $K>2$ in a much less restricted way than the two-process model. While a $K=2$ model well describes the global abundance patterns, intrinsic residual scatter on the scale of 0.01 to 0.02 dex remains (\citealp{ting2022}, W22, G22). This scatter could be signatures of enrichment from non-CCSN/SNIa sources, stochastic sampling of the IMF, environmental IMF variations, or metallicity-dependent SN yields with a bursty star formation history \citep[e.g.][]{belokurov2022, griffith2023}. While it is difficult to identify non-CCSN or SNIa enrichment in the APOGEE data alone, where only C+N and Ce are expected to have significant contributions from other sources, there may be signatures in other surveys with better coverage of heavier elements. Applying a $K>2$ model to GALAH \citep{buder2021}, or an overlapping sample of APOGEE and GALAH stars \citep{nandakumar2022}, could prove more successful. 
 
-In the $K=2$ and $K>2$ cases, results from \name{} will help us disentangle our Galactic formation and enrichment history. This data-driven model opens doors to many new research projects and exciting future scientific results. To use \name{} yourself, please reference the KPM GitHub repository\footnote{\url{https://github.com/13emilygriffith/KProcessModel}} or contact the corresponding author. 
+In the $K=2$ and $K>2$ cases, results from \name{} will help us disentangle our Galactic formation and enrichment history. This data-driven model opens doors to many new research projects and exciting future scientific results. To use \name{} yourself, please reference the \name{} GitHub repository\footnote{\url{https://github.com/13emilygriffith/KProcessModel}} or contact the corresponding author. 
 
 
 \section{Acknowledgements}
