@@ -28,7 +28,7 @@ def inflate_ivars(data, fixed, fit, Q=5):
 
 	return (data.allivars_orig * Q**2) / (Q**2 + diff**2 * data.allivars_orig)
 
-def A_step(data, fixed, lnq_pars, lnAs, I=None):
+def A_step(data, fixed, lnq_pars, lnAs, I=None, verbose=False):
 	"""
 	## inputs
 	## outputs
@@ -47,17 +47,17 @@ def A_step(data, fixed, lnq_pars, lnAs, I=None):
 					regs.A.sqrt_Lambda_A, lnAs)
 	new_lnAs = jnp.where(dc2 < 0, lnAs, new_lnAs)
 	if not jnp.all(jnp.isfinite(new_lnAs)):
-		print("A-step(): fixing bad elements:", jnp.sum(jnp.logical_not(jnp.isfinite(new_lnAs))))
+		if verbose: print("A-step(): fixing bad elements:", jnp.sum(jnp.logical_not(jnp.isfinite(new_lnAs))))
 		new_lnAs = jnp.where(jnp.isfinite(new_lnAs), new_lnAs, lnAs)
 	if np.any(new_lnAs > 2.0): # MAGIC HACK
-		print("A-step(): fixing large elements:", np.sum(new_lnAs > 2.0), np.max(new_lnAs))
+		if verbose: print("A-step(): fixing large elements:", np.sum(new_lnAs > 2.0), np.max(new_lnAs))
 		new_lnAs = jnp.where(new_lnAs > 2.0, 2.0, new_lnAs)
 	if np.any(new_lnAs < -9.0): # MAGIC HACK
-		print("A-step(): fixing small elements:", np.sum(new_lnAs < -9.0), np.min(new_lnAs))
+		if verbose: print("A-step(): fixing small elements:", np.sum(new_lnAs < -9.0), np.min(new_lnAs))
 		new_lnAs = jnp.where(new_lnAs < -9.0, -9.0, new_lnAs)
 	return new_lnAs, dc2
 
-def q_step(data, fixed, lnq_pars, lnAs):
+def q_step(data, fixed, lnq_pars, lnAs, verbose=False):
 	"""
 	## inputs
 	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
@@ -81,13 +81,13 @@ def q_step(data, fixed, lnq_pars, lnAs):
 					jnp.array(regs.Q.fixed_q), lnq_pars)
 	new_lnq_pars = jnp.where(dc2 < 0, lnq_pars, new_lnq_pars)
 	if not np.all(jnp.isfinite(new_lnq_pars)):
-		print("q-step(): fixing bad elements:", np.sum(jnp.logical_not(jnp.isfinite(new_lnq_pars))))
+		if verbose: print("q-step(): fixing bad elements:", np.sum(jnp.logical_not(jnp.isfinite(new_lnq_pars))))
 		new_lnq_pars = jnp.where(jnp.isfinite(new_lnq_pars), new_lnq_pars, fit.lnq_pars)
 	if np.any(new_lnq_pars > 1.0): # MAGIC HACK
-		print("q-step(): fixing large elements:", np.sum(new_lnq_pars > 1.0), np.max(new_lnq_pars))
+		if verbose: print("q-step(): fixing large elements:", np.sum(new_lnq_pars > 1.0), np.max(new_lnq_pars))
 		new_lnq_pars = jnp.where(new_lnq_pars > 1.0, 1.0, new_lnq_pars)
 	if np.any(new_lnq_pars < -9.0): # MAGIC HACK
-		print("q-step(): fixing small elements:", np.sum(new_lnq_pars < -9.0), np.min(new_lnq_pars))
+		if verbose: print("q-step(): fixing small elements:", np.sum(new_lnq_pars < -9.0), np.min(new_lnq_pars))
 		new_lnq_pars = jnp.where(new_lnq_pars < -9.0, -9.0, new_lnq_pars)
 	return new_lnq_pars, dc2
 
@@ -112,7 +112,7 @@ def objective_A(data, fixed, lnq_pars, lnAs):
 							 data.alldata, data.sqrt_allivars, regs.A.sqrt_Lambda_A)
 	return np.sum(chi ** 2) + np.sum(regs.Q.Lambdas * (jnp.exp(lnq_pars) - regs.Q.q0s) ** 2)
 
-def Aq_step(data, fixed, fit):
+def Aq_step(data, fixed, fit, verbose=False):
 	"""
 	## Bugs:
 	- This contains multiple hacks, especially the noisification hack.
@@ -139,33 +139,33 @@ def Aq_step(data, fixed, fit):
 
 	# run q step
 	objective1 = objective_q(data, fixed, old_lnq_pars, init_lnAs)
-	new_lnq_pars, _ = q_step(data, fixed, old_lnq_pars, init_lnAs)
+	new_lnq_pars, _ = q_step(data, fixed, old_lnq_pars, init_lnAs, verbose=verbose)
 	objective2 = objective_q(data, fixed, new_lnq_pars, init_lnAs)
 	if objective2 > objective1:
-		print(prefix, "q-step WARNING: objective function got worse:", objective1, objective2)
+		if verbose: print(prefix, "q-step WARNING: objective function got worse:", objective1, objective2)
 		new_lnq_pars = old_lnq_pars.copy()
 		objective2 = objective1
 
 	# run A step
 	objective3 = objective_A(data, fixed, new_lnq_pars, init_lnAs)
-	new_lnAs, _ = A_step(data, fixed, new_lnq_pars, init_lnAs, I=fixed.I)
+	new_lnAs, _ = A_step(data, fixed, new_lnq_pars, init_lnAs, I=fixed.I,  verbose=verbose)
 	objective4 = objective_A(data, fixed, new_lnq_pars, new_lnAs)
 	if objective4 > objective3:
-		print(prefix, "A-step WARNING: objective function got worse:", objective3, objective4)
+		if verbose: print(prefix, "A-step WARNING: objective function got worse:", objective3, objective4)
 		new_lnAs = init_lnAs.copy()
 		objective4 = objective3
 
 	# check objective
-	print(old_objective, objective1, objective2, objective3, objective4)
+	if verbose: print(old_objective, objective1, objective2, objective3, objective4)
 	if objective4 < old_objective:
-		print(prefix, "we took a step!", fixed.ln_noise, objective4, old_objective - objective4)
+		if verbose: print(prefix, "we took a step!", fixed.ln_noise, objective4, old_objective - objective4)
 		# If we took a step, then we can be more aggressive with the noise we are adding (see above).
 		fixed.ln_noise = np.around(fixed.ln_noise + 0.1, 1) # Gross global variable!
 		fit.lnq_pars = new_lnq_pars
 		fit.lnAs = new_lnAs
 
 	else:
-		print(prefix, "we didn't take a step :(", fixed.ln_noise, old_objective, old_objective - objective4)
+		if verbose: print(prefix, "we didn't take a step :(", fixed.ln_noise, old_objective, old_objective - objective4)
 		# If we didn't take a step, maybe it's because we added too much noise (see above)?
 		fixed.ln_noise = np.around(fixed.ln_noise - 1.0, 1)
 		fit.lnq_pars = old_lnq_pars.copy()

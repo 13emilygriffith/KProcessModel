@@ -65,21 +65,23 @@ class regularizations:
 			q0s[    proc, 0, elem] = 0.0
 			fixed_q[  proc, :, elem] = True
 
-			# 3: Require that q_X has some value / form for CC process for Ia_elem
-			proc = fixed.processes == "CC"
-			elem = data.elements == fixed.Ia_elem
-			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 1.0
-			q0s[    proc, 0, elem] = fixed.q_CC_Fe 
-			fixed_q[  proc, :, elem] = True
 
-			# 4: Strongly require that q_X sum to 1 for Ia_elem
-			proc = fixed.processes == "Ia"
-			elem = data.elements == fixed.Ia_elem
-			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 1.0
-			q0s[    proc, 0, elem] = 1.0 - fixed.q_CC_Fe
-			fixed_q[  proc, :, elem] = True
+			if fixed.K > 1:
+				# 3: Require that q_X has some value / form for CC process for Ia_elem
+				proc = fixed.processes == "CC"
+				elem = data.elements == fixed.Ia_elem
+				Lambdas[proc, :, elem] = fixed.Lambda_a
+				q0s[    proc, :, elem] = 1.0
+				q0s[    proc, 0, elem] = fixed.q_CC_Fe 
+				fixed_q[  proc, :, elem] = True
+
+				# 4: Strongly require that q_X sum to 1 for Ia_elem
+				proc = fixed.processes == "Ia"
+				elem = data.elements == fixed.Ia_elem
+				Lambdas[proc, :, elem] = fixed.Lambda_a
+				q0s[    proc, :, elem] = 1.0
+				q0s[    proc, 0, elem] = 1.0 - fixed.q_CC_Fe
+				fixed_q[  proc, :, elem] = True
 
 			self._Lambdas = Lambdas
 			self._q0s = q0s
