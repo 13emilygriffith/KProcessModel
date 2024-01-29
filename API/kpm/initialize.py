@@ -19,14 +19,14 @@ def initialize_2(data, fixed, verbose=False):
 	- very brittle
 	- relies on global variables
 	"""
-	assert fixed.K <= 2
+	#assert fixed.K <= 2
 
 	regs = regularizations(data, fixed)
 	fit = fit_params(data, fixed)
 
 	fit.lnq_pars = jnp.where(regs.Q.fixed_q, regs.Q.lnq_par0s, fit.lnq_pars)
 
-	I = [el in [fixed.CC_elem, fixed.Ia_elem] for el in data.elements]
+	I = [el in fixed.proc_elems for el in data.elements]
 	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=I, verbose=verbose)
 	if verbose: print("initialize_2():", np.median(fit.lnAs[1:] - fit.lnAs[0], axis=1))
 
@@ -88,7 +88,7 @@ def run_kpm(data, fixed, fit, file_path, name='kpm_allstars', N_rounds=3, N_itte
 
 	#data, fit = initialize_2(data, fixed)
 
-	pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_CC_Fe)+'_J'+str(fixed.J)
+	pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_fixed[1,0])+'_J'+str(fixed.J)
 
 	# run round of itterations
 	for r in range(N_rounds):
