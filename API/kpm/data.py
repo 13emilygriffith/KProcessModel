@@ -331,9 +331,9 @@ class fixed_params:
 		else:
 			raise TypeError("Attribute 'proc_elems' must be an array. Got: %s" 
 				% (type(value)))
-		if len(proc_elems) != K:
+		if len(value) != self._K:
 			raise ValueError("Length of 'proc_elems' must be equal to K."
-				"Got %s" % (len(proc_elems)))
+				"Got %s" % (len(value)))
 		for e in value:
 			if isinstance(e, str): pass
 			else:
@@ -346,7 +346,7 @@ class fixed_params:
 			raise ValueError("Cannot reset the first process element. Please \
 				re-initialize 'fixed_params'.")
 		self._proc_elems = value
-		self._proc_ids = np.array([np.where(elements==e)[0][0] for e in value])
+		self._proc_ids = np.array([np.where(self._elements==e)[0][0] for e in value])
 
 	@property
 	def proc_ids(self):
@@ -397,8 +397,8 @@ class fixed_params:
 			raise TypeError("Attribute 'q_fixed' must be a numpy array."
 				"Got: %s" % (type(value)))
 		if np.shape(value) != (self._K,self._K): 
-			raise ValueError("Shape of 'q_fixed' must be ('K', 'K'). Got %s"
-				% (np.shape(value)))
+			raise ValueError("Shape of 'q_fixed' must be ('K', 'K'). Got (%s, %s)" 
+				% (np.shape(value)[0], np.shape(value)[1]))
 		for q in value.flatten():
 			if isinstance(q, float):
 				if q<0: 

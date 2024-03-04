@@ -88,7 +88,10 @@ def run_kpm(data, fixed, fit, file_path, name='kpm_allstars', N_rounds=3, N_itte
 
 	#data, fit = initialize_2(data, fixed)
 
-	pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_fixed[1,0])+'_J'+str(fixed.J)
+	if fixed.K>1:
+		pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_qccFe'+str(fixed.q_fixed[1,0])+'_J'+str(fixed.J)
+	else: 
+		pik_suffix = file_path+'/'+name+'_K'+str(fixed.K)+'_J'+str(fixed.J)
 
 	# run round of itterations
 	for r in range(N_rounds):
