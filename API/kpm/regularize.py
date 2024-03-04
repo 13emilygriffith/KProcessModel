@@ -22,11 +22,7 @@ class regularizations:
 		"""
 
 		def __init__(self, fixed):
-
-			sqrt_Lambda = jnp.ones(fixed.K) * jnp.sqrt(fixed.Lambda_d)
-			sqrt_Lambda = jnp.where(fixed.processes == "CC", 0., sqrt_Lambda)
-			sqrt_Lambda = jnp.where(fixed.processes == "Ia", 0., sqrt_Lambda)
-			self._sqrt_Lambda_A = sqrt_Lambda
+			self._sqrt_Lambda_A = fixed.sqrt_Lambda_As
 
 		@property
 		def sqrt_Lambda_A(self):
@@ -45,43 +41,20 @@ class regularizations:
 		def __init__(self, data, fixed):
 
 			q_array = np.zeros((fixed.K, fixed.J, data.M))
-			Lambdas = q_array + fixed.Lambda_c
+			# initially set all regularizations to the free reg value
+			Lambdas = q_array + fixed.Lambda_qs[1]
 			q0s = q_array + 1.0
 			fixed_q = q_array.astype(bool)
 
-			# 1: Strongly require that q_X = 1 for CC process for CC_elem
-			proc = fixed.processes == "CC"
-			elem = data.elements == fixed.CC_elem
-			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 1.0
-			q0s[    proc, 0, elem] = 1.0
-			fixed_q[  proc, :, elem] = True
-
-			# 2: Require that q_X = 0 for ALL except CC process for CC_elem
-			proc = fixed.processes != "CC"
-			elem = data.elements == fixed.CC_elem
-			Lambdas[proc, :, elem] = fixed.Lambda_a
-			q0s[    proc, :, elem] = 1.0
-			q0s[    proc, 0, elem] = 0.0
-			fixed_q[  proc, :, elem] = True
-
-
-			if fixed.K > 1:
-				# 3: Require that q_X has some value / form for CC process for Ia_elem
-				proc = fixed.processes == "CC"
-				elem = data.elements == fixed.Ia_elem
-				Lambdas[proc, :, elem] = fixed.Lambda_a
-				q0s[    proc, :, elem] = 1.0
-				q0s[    proc, 0, elem] = fixed.q_CC_Fe 
-				fixed_q[  proc, :, elem] = True
-
-				# 4: Strongly require that q_X sum to 1 for Ia_elem
-				proc = fixed.processes == "Ia"
-				elem = data.elements == fixed.Ia_elem
-				Lambdas[proc, :, elem] = fixed.Lambda_a
-				q0s[    proc, :, elem] = 1.0
-				q0s[    proc, 0, elem] = 1.0 - fixed.q_CC_Fe
-				fixed_q[  proc, :, elem] = True
+			for i, elem_id in enumerate(fixed.proc_ids):
+				for proc in range(fixed._K):
+					value = fixed.q_fixed[i, proc]
+					if value == None: pass
+					else:
+						Lambdas[proc, :, elem_id] = fixed.Lambda_qs[0]
+						q0s[    proc, :, elem_id] = 1.0
+						q0s[    proc, 0, elem_id] = value
+						fixed_q[  proc, :, elem_id] = True
 
 			self._Lambdas = Lambdas
 			self._q0s = q0s
