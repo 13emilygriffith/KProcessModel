@@ -160,6 +160,8 @@ class fixed_params:
 		Number of parameters in lnq_par model. Can only be odd. If given an
 		even number, will use J-1
 		Default is 9
+	dilution:
+	D:
 	elements: numpy array shape(M)
 		List of elements to fit with q_step. Should be identical to list in 
 		'abund_data' class.
@@ -199,9 +201,12 @@ class fixed_params:
 		Default is [1.e6, 1.e3]
 	sqrt_Lambda_As: numpy array shape(K)
 		Array of squareroot of the regularisation strengths on A values.
-	ln_noise: int
+	ln_noise: float
 		Log of hacky amplitude of noise used to improve the optimization
 		Default is -4.0
+	D_noise: float
+		Hacky amplitude of noise used to improve the of dilution parameter
+		Default is 0.05
 
 	Class Methods
 	-------------
@@ -219,16 +224,18 @@ class fixed_params:
 		resets K but not other values
 	"""
 	
-	def __init__(self, data, K=2, J=9,
+	def __init__(self, data, K=2, J=9, dilution=False,
 				 A_list=np.array(['Mg','Fe']),
 				 proc_elems=np.array(['Mg','Fe']), 
 				 q_fixed=np.array([[1.,0.],[0.4,0.6]]),
 				 Lambda_qs=np.array([1.e6, 1.e3]),
-				 Lambda_As=np.array([1.e3, 1.e3]), 
-				 ln_noise=-4.0):
+				 Lambda_As=np.array([0, 0]),
+				 Lambda_D= 1.e1, 
+				 ln_noise=-4.0, D_noise=0.05):
 
 		self.K = K
 		self.J = J
+		self.dilution = dilution
 		self._elements = data.elements
 		self.A_list = A_list
 
@@ -255,8 +262,10 @@ class fixed_params:
 		
 		self.Lambda_qs = Lambda_qs
 		self.Lambda_As = Lambda_As
+		self.Lambda_D = Lambda_D
 
 		self._ln_noise = ln_noise
+		self._D_noise = D_noise
 
 	@property
 	def K(self):
@@ -286,6 +295,23 @@ class fixed_params:
 			model must be odd. Got J= %f, using %f" % (value, value-1))
 			self._J = value-1
 		else: self._J = value
+
+	@property
+	def dilution(self):
+		return self._dilution
+
+	@dilution.setter
+	def dilution(self, value):
+		if isinstance(value, bool): 
+			self._dilution = value
+			self._D = int(value)
+		else:
+			raise TypeError("Attribute dilution must be a bool. \
+				Got: %s" % (type(value)))
+
+	@property
+	def D(self):
+		return self._D
 
 	@property
 	def elements(self):
@@ -424,8 +450,8 @@ class fixed_params:
 			raise TypeError("Attribute 'Lambda_As' must be a numpy array."
 				"Got: %s" % (type(value)))
 		if len(value) != self._K:
-			raise ValueError("Length of 'Lambda_As must be equal to K."
-				"Got %s" % (len(value)))
+			raise ValueError("Length of 'Lambda_As must be equal to K.\
+				Got %s" % (len(value)))
 		for L in value:
 			if isinstance(L, float): pass
 			else: 
@@ -437,6 +463,27 @@ class fixed_params:
 	@property
 	def sqrt_Lambda_As(self):
 		return self._sqrt_Lambda_As
+
+
+	@property
+	def Lambda_D(self):
+		return self._Lambda_D
+
+	@Lambda_D.setter
+	def Lambda_D(self, value):
+		if isinstance(value, float): pass
+		else:
+			raise TypeError("Attribute 'Lambda_D' must be a float."
+				"Got: %s" % (type(value)))
+		if value<0:
+			raise ValueError("Attribute 'Lambda_D' must be positive."
+				"Got: %s" % (value))
+		self._Lambda_D = value
+		self._sqrt_Lambda_D = np.sqrt(value)
+
+	@property
+	def sqrt_Lambda_D(self):
+		return self._sqrt_Lambda_D
 
 	@property
 	def Lambda_qs(self):
@@ -465,6 +512,15 @@ class fixed_params:
 	@ln_noise.setter
 	def ln_noise(self, value):
 		self._ln_noise = value
+
+	@property
+	def D_noise(self):
+		return self._D_noise
+
+	@D_noise.setter
+	# Need to add value errors here
+	def D_noise(self, value):
+		self._D_noise = value
 		
 	def __repr__(self):
 		attrs = {
@@ -475,7 +531,8 @@ class fixed_params:
 			"J":				self._J,
 			"Lambda As":		self._Lambda_As,
 			"Lambda qs":		self._Lambda_qs,
-			"xlim":				self._xlim
+			"xlim":				self._xlim,
+			"dilution":			self._D
 		}
 
 		rep = "kpm.fixed_params{\n"
@@ -497,14 +554,15 @@ class fit_params:
 	lnq_pars: numpy array shape(K, J, M)
 		Array of log of coefficients for the q process vectors
 
-	lnAs: numpy array shape(K, N)
+	lnAs: numpy array shape(K+1, N)
 		Array of log of process amplitudes for each star
+		ADD about dilution
 	"""
 
 	def __init__(self, data, fixed):
 
 		lnq_pars = np.zeros((fixed.K, fixed.J, data.M))
-		lnAs = np.zeros((fixed.K, data.N))
+		lnAs = np.zeros((fixed.K+1, data.N))
 
 		self._lnq_pars = lnq_pars
 		self._lnAs = lnAs 

@@ -41,10 +41,10 @@ def A_step(data, fixed, lnq_pars, lnAs, I=None, verbose=False):
 	regs = regularizations(data, fixed) 
 	if I==None: I = [True]*data.M
 
-	new_lnAs, dc2 = vmap(one_star_A_step, in_axes=(1, 0, 0, None, 1),
-					out_axes=(1, 0))(internal_get_lnqs(lnq_pars[:,:,I], fixed.L, fixed.xs), 
+	new_lnAs, dc2 = vmap(one_star_A_step, in_axes=(1, 0, 0, None, None, None, 1),
+					out_axes=(1, 0))(internal_get_lnqs(lnq_pars[:,:,I], fixed.L, fixed.xs, lnAs, fixed.D), 
 					data.alldata[:,I], data.sqrt_allivars[:,I], 
-					regs.A.sqrt_Lambda_A, lnAs)
+					regs.A.sqrt_Lambda_A, fixed.D, regs.D.sqrt_Lambda_D, lnAs)
 	new_lnAs = jnp.where(dc2 < 0, lnAs, new_lnAs)
 	if not jnp.all(jnp.isfinite(new_lnAs)):
 		if verbose: print("A-step(): fixing bad elements:", jnp.sum(jnp.logical_not(jnp.isfinite(new_lnAs))))
@@ -75,10 +75,10 @@ def q_step(data, fixed, lnq_pars, lnAs, verbose=False):
 	
 	regs = regularizations(data, fixed)
 
-	new_lnq_pars, dc2 = vmap(one_element_q_step, in_axes=(None, 1, 1, None, None, 2, 2, 2, 2),
+	new_lnq_pars, dc2 = vmap(one_element_q_step, in_axes=(None, 1, 1, None, None, 2, 2, 2, None, 2),
 					out_axes=(2, 0))(lnAs, data.alldata, data.sqrt_allivars, 
 					fixed.L, fixed.xs, jnp.sqrt(regs.Q.Lambdas), jnp.array(regs.Q.q0s),
-					jnp.array(regs.Q.fixed_q), lnq_pars)
+					jnp.array(regs.Q.fixed_q), fixed.D, lnq_pars)
 	new_lnq_pars = jnp.where(dc2 < 0, lnq_pars, new_lnq_pars)
 	if not np.all(jnp.isfinite(new_lnq_pars)):
 		if verbose: print("q-step(): fixing bad elements:", np.sum(jnp.logical_not(jnp.isfinite(new_lnq_pars))))
@@ -97,19 +97,19 @@ def objective_q(data, fixed, lnq_pars, lnAs):
 	This is NOT the objective, but it stands in for now!!
 	"""
 	regs = regularizations(data, fixed)
-	chi = vmap(one_element_chi, in_axes=(2, None, 1, 1, None, None, 2, 2),
+	chi = vmap(one_element_chi, in_axes=(2, None, 1, 1, None, None, 2, 2, None),
 			   out_axes=(0))(lnq_pars, lnAs, data.alldata, data.sqrt_allivars, fixed.L, fixed.xs,
-							 jnp.sqrt(regs.Q.Lambdas), regs.Q.q0s)
-	return np.sum(chi * chi) + np.sum((regs.A.sqrt_Lambda_A[:, None] * jnp.exp(lnAs)) ** 2)
+							 jnp.sqrt(regs.Q.Lambdas), regs.Q.q0s, fixed.D)
+	return np.sum(chi * chi) + np.sum((regs.A.sqrt_Lambda_A[:, None] * jnp.exp(lnAs[-1:])) ** 2)
 
 def objective_A(data, fixed, lnq_pars, lnAs):
 	"""
 	This is NOT the objective, but it stands in for now!!
 	"""
 	regs = regularizations(data, fixed)
-	chi = vmap(one_star_chi, in_axes=(1, 1, 0, 0, None),
-			   out_axes=(0))(lnAs, internal_get_lnqs(lnq_pars, fixed.L, fixed.xs),
-							 data.alldata, data.sqrt_allivars, regs.A.sqrt_Lambda_A)
+	chi = vmap(one_star_chi, in_axes=(1, 1, 0, 0, None, None, None),
+			   out_axes=(0))(lnAs, internal_get_lnqs(lnq_pars, fixed.L, fixed.xs, lnAs, fixed.D),
+							 data.alldata, data.sqrt_allivars, regs.A.sqrt_Lambda_A, fixed.D, regs.D.sqrt_Lambda_D)
 	return np.sum(chi ** 2) + np.sum(regs.Q.Lambdas * (jnp.exp(lnq_pars) - regs.Q.q0s) ** 2)
 
 def Aq_step(data, fixed, fit, verbose=False):
@@ -131,11 +131,11 @@ def Aq_step(data, fixed, fit, verbose=False):
 	# add noise -- this is a hack to escape possible local minima.
 	# Note the use of logaddexp, so things are non-intuitive here.
 	A_noise = fixed.ln_noise + np.log(_RNG.uniform(size=old_lnAs.shape))
+	D_noise = fixed.D_noise * _RNG.uniform(size=old_lnAs[-1,:].shape, low=-1, high=1)
 	init_lnAs = jnp.logaddexp(old_lnAs, A_noise)
-	q_noise = fixed.ln_noise + np.log(_RNG.uniform(size=old_lnq_pars.shape))
-	q_noise[:, :, data.elements == "Mg"] = -np.inf # HACK 
-	q_noise[:, :, data.elements == "Fe"] = -np.inf # HACK
-	init_lnq_pars = jnp.logaddexp(old_lnq_pars, q_noise)
+	init_lnAsD = old_lnAs + D_noise
+	# Replace last column
+	init_lnAs = init_lnAs.at[-1,:].set(init_lnAsD[-1,:])
 
 	# run q step
 	objective1 = objective_q(data, fixed, old_lnq_pars, init_lnAs)
@@ -158,16 +158,18 @@ def Aq_step(data, fixed, fit, verbose=False):
 	# check objective
 	if verbose: print(old_objective, objective1, objective2, objective3, objective4)
 	if objective4 < old_objective:
-		if verbose: print(prefix, "we took a step!", fixed.ln_noise, objective4, old_objective - objective4)
+		if verbose: print(prefix, "we took a step!", fixed.ln_noise, fixed.D_noise, objective4, old_objective - objective4)
 		# If we took a step, then we can be more aggressive with the noise we are adding (see above).
-		fixed.ln_noise = np.around(fixed.ln_noise + 0.1, 1) # Gross global variable!
+		fixed.ln_noise = fixed.ln_noise + 0.1 # Magic
+		fixed.D_noise = fixed.D_noise * jnp.exp(0.1)
 		fit.lnq_pars = new_lnq_pars
 		fit.lnAs = new_lnAs
 
 	else:
-		if verbose: print(prefix, "we didn't take a step :(", fixed.ln_noise, old_objective, old_objective - objective4)
+		if verbose: print(prefix, "we didn't take a step :(", fixed.ln_noise, fixed.D_noise, old_objective, old_objective - objective4)
 		# If we didn't take a step, maybe it's because we added too much noise (see above)?
-		fixed.ln_noise = np.around(fixed.ln_noise - 1.0, 1)
+		fixed.ln_noise = fixed.ln_noise - 1.0
+		fixed.D_noise = fixed.D_noise / jnp.exp(1.0)
 		fit.lnq_pars = old_lnq_pars.copy()
 		fit.lnAs = old_lnAs.copy()
 

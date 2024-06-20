@@ -7,19 +7,18 @@ import pickle
 from .data import fit_params
 from .regularize import regularizations
 from .optimize import A_step, q_step, inflate_ivars, Aq_step
+from ._globals import _LN10
 
 
-__all__ = ["initialize_2", "initialize_As", "find_As"]
+__all__ = ["initialize", "initialize_As", "find_As", "initialize_from_2"]
 
-def initialize_2(data, fixed, verbose=False): 
+def initialize(data, fixed, verbose=False): 
 	#, K, q_CC_Fe, dq_CC_Fe_dZ, elements, knot_xs, alldata, allivars_orig):
 	"""
 	## Bugs:
-	- DOESN'T WORK for K > 2 ??
 	- very brittle
 	- relies on global variables
 	"""
-	#assert fixed.K <= 2
 
 	regs = regularizations(data, fixed)
 	fit = fit_params(data, fixed)
@@ -27,15 +26,56 @@ def initialize_2(data, fixed, verbose=False):
 	fit.lnq_pars = jnp.where(regs.Q.fixed_q, regs.Q.lnq_par0s, fit.lnq_pars)
 
 	I = [el in fixed.proc_elems for el in data.elements]
+	print(data.elements[I])
+
+	D_temp = fixed.dilution
+	fixed.dilution = False # just for initalization
+
 	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=I, verbose=verbose)
+	fit.lnAs = fit.lnAs.at[-1,:].set(np.zeros(data.N))
 	if verbose: print("initialize_2():", np.median(fit.lnAs[1:] - fit.lnAs[0], axis=1))
 
 	fit.lnq_pars, _ = q_step(data, fixed, fit.lnq_pars, fit.lnAs, verbose=verbose)
+
+	# fit.lnAs = fit.lnAs.at[:-1,:].set(fit.lnAs[:-1,:]+0.1)
+	# fit.lnAs = fit.lnAs.at[-1,:].set(np.ones(data.N)*0.1/_LN10) #trying to give an initial value
+	fit.lnAs = fit.lnAs.at[-1,:].set(np.zeros(data.N))
+	fixed.dilution = D_temp
 	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=fixed.I, verbose=verbose)
 	if verbose: print("initialize_2():", np.median(fit.lnAs[1:] - fit.lnAs[0], axis=1))
 
 	data.allivars = inflate_ivars(data, fixed, fit, Q=7)
 	return data, fit
+
+def initialize_from_2(data, fixed, fit_2, verbose=False):
+	fit = fit_params(data, fixed)
+	fit.lnq_pars[:2,:,:] = fit_2.lnq_pars
+	fit.lnAs[:2,:] = fit_2.lnAs[:2,:]
+
+	regs = regularizations(data, fixed)
+	fit.lnq_pars = jnp.where(regs.Q.fixed_q, regs.Q.lnq_par0s, fit.lnq_pars)
+
+	I = [el in fixed.proc_elems for el in data.elements]
+
+	D_temp = fixed.dilution
+	fixed.dilution = False # just for initalization
+
+	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=I, verbose=verbose)
+	fit.lnAs = fit.lnAs.at[-1,:].set(np.zeros(data.N))
+	if verbose: print("initialize_2():", np.median(fit.lnAs[1:] - fit.lnAs[0], axis=1))
+
+	fit.lnq_pars, _ = q_step(data, fixed, fit.lnq_pars, fit.lnAs, verbose=verbose)
+
+	fit.lnAs = fit.lnAs.at[-1,:].set(np.zeros(data.N))
+	fixed.dilution = D_temp
+	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=fixed.I, verbose=verbose)
+	if verbose: print("initialize_2():", np.median(fit.lnAs[1:] - fit.lnAs[0], axis=1))
+	# fit.lnAs = fit.lnAs.at[2,:].set(np.zeros(data.N))
+	# fixed.dilution = D_temp
+
+	data.allivars = inflate_ivars(data, fixed, fit, Q=7)
+	return data, fit
+	
 
 def initialize_As(data, fixed, fit_old, verbose=False): 
 	#, K, q_CC_Fe, dq_CC_Fe_dZ, elements, knot_xs, alldata, allivars_orig):
@@ -59,10 +99,13 @@ def find_As(data, fixed, lnq_pars, verbose=False):
 	- very brittle
 	- relies on global variables
 	"""
-	assert fixed.K <= 2
+	#assert fixed.K <= 2
 
 	fit = fit_params(data, fixed)
 	fit.lnq_pars = lnq_pars
+
+	if fixed.D == 1:
+		fit.lnAs[-1,:] = np.ones(data.N)*0.00
 
 	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=fixed.I, verbose=verbose)
 
@@ -109,6 +152,8 @@ def run_kpm(data, fixed, fit, file_path, name='kpm_allstars', N_rounds=3, N_itte
 
 			for i in range(N_itters):
 				fit = Aq_step(data, fixed, fit, verbose=verbose)
+				if fixed.D==0: 
+					fit.lnAs = fit.lnAs.at[-1,:].set(np.zeros(data.N))
 			
 			save = [fit, fixed]
 			with open(pik_name, "wb") as f:

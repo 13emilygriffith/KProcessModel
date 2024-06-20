@@ -6,10 +6,10 @@ import pickle
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 
-from .general import internal_get_lnqs, all_stars_KPM, all_stars_fcc
+from .general import internal_get_lnqs, all_stars_KPM, all_stars_fk
 from ._globals import _RNG2
 
-__all__ = ["plot_qs", "plot_As", "plot_model_abundances", "plot_fcc", "plot_chi2"]
+__all__ = ["plot_qs", "plot_As", "plot_model_abundances", "plot_fk", "plot_chi2"]
 
 
 def plot_qs(data, fixed, fit):
@@ -19,7 +19,7 @@ def plot_qs(data, fixed, fit):
     - Need to set size and number of subplots based on number of elements
     """
     MgH = np.linspace(fixed.xlim[0]-0.2, fixed.xlim[1]+0.2, 300) # plotting xs
-    new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH)) # interp to plotting xs
+    new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH, np.zeros((fixed.K+1, len(MgH))), fixed.D)) # interp to plotting xs
     # w22_MgH = w22_metallicities
     # w22_qs = np.exp(w22_lnqs)
 
@@ -83,27 +83,28 @@ def plot_model_abundances(data, fixed, fit, noise=False):
 
     for j in range(len(data.elements) - 1):
         ax = axes[j, 0]
-        ax.hist2d(data.alldata[:,0], data.alldata[:,j+1] - data.alldata[:,0],
-                  cmap='magma', bins=100, range=[[MgHmin,0.6],[-0.5,0.2]], norm=LogNorm())
+        mask = np.where(data.allivars[:,j+1]!=0)[0]
+        ax.hist2d(data.alldata[:,0][mask], data.alldata[:,j+1][mask] - data.alldata[:,0][mask],
+                  cmap='magma', bins=100, range=[[MgHmin,0.6],[-0.7,0.4]], norm=LogNorm())
         ax.set_xlabel('[Mg/H]')
         ax.set_ylabel('[{}/Mg]'.format(data.elements[j+1]))
-        ax.set_ylim(-0.5,0.2)
+        ax.set_ylim(-0.7,0.4)
         if j == 0:
             ax.set_title('observed')
 
         ax = axes[j, 1]
         sata = synthdata + synthnoise
         ax.hist2d(sata[:,0], sata[:,j+1] - sata[:,0],
-                  cmap='magma', bins=100, range=[[MgHmin,0.6],[-0.5,0.2]], norm=LogNorm())
+                  cmap='magma', bins=100, range=[[MgHmin,0.6],[-0.7,0.4]], norm=LogNorm())
         ax.set_xlabel('[Mg/H]')
         ax.set_ylabel('[{}/Mg]'.format(data.elements[j+1]))
-        ax.set_ylim(-0.5,0.2)
+        ax.set_ylim(-0.7,0.4)
         if j == 0:
             ax.set_title('predicted' + noisestr)
 
         ax = axes[j, 2]
-        ax.hist2d(data.sqrt_allivars[:, 0] * (data.alldata[:, 0] - synthdata[:, 0]),
-                  data.sqrt_allivars[:, j+1] * (data.alldata[:, j+1] - synthdata[:, j+1]),
+        ax.hist2d(data.sqrt_allivars[:, 0][mask] * (data.alldata[:, 0][mask] - synthdata[:, 0][mask]),
+                  data.sqrt_allivars[:, j+1][mask] * (data.alldata[:, j+1][mask] - synthdata[:, j+1][mask]),
                 cmap='magma', bins=100, range=[[-10, 10], [-10, 10]], norm=LogNorm())
         ax.set_xlabel('[Mg/H] chi')
         ax.set_ylabel('[{}/H] chi'.format(data.elements[j+1]))
@@ -112,32 +113,32 @@ def plot_model_abundances(data, fixed, fit, noise=False):
 
     plt.tight_layout()
 
-def plot_fcc(data, fixed, fit):
+def plot_fk(data, fixed, fit):
 
-    plt.figure(figsize=(15, 2.5*data.M//4+1))
+    plt.figure(figsize=(2.5*(fixed.K), 2.5*data.M))
+    
+    for k in range(fixed.K):
+        fk = all_stars_fk(fixed, fit ,k)
+        for i in range(data.M):
+            plt.subplot(data.M,fixed.K,(fixed.K*i)+k+1)
+            plt.hist2d(fixed.xs, fk[:,i], norm=LogNorm(), bins=100, range=[[-2,0.4],[-0.1,1.1]],
+                cmap='magma')
 
-    fcc = all_stars_fcc(fixed, fit)
-    for i in range(data.M):
-        plt.subplot(data.M//4+1,4,i+1)
-
-        plt.hist2d(fixed.xs, fcc[0,:,i], norm=LogNorm(), bins=100, range=[[-2,0.4],[-0.1,1.1]],
-            cmap='magma')
-
-        plt.xlabel('[Mg/H]')
-        plt.ylabel('f_cc '+ data.elements[i])
-        plt.ylim(-0.05,1.05)
-        if i ==0: plt.legend(fontsize=10)
+            plt.xlabel('[Mg/H]')
+            plt.ylabel('f_ '+str(k+1)+' '+data.elements[i])
+            plt.ylim(-0.05,1.05)
+            if (i==0): plt.title('k='+str(k))
     plt.tight_layout()
     plt.show()
 
 
-def plot_chi2(data, fixed, fit_list, color_list, label_list):
+def plot_chi2(data, fixed_list, fit_list, color_list, label_list):
 
     f, (ax0, ax1) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [1, 3]}, figsize=(10,3))
 
-    for fit, color, label in zip(fit_list,color_list, label_list):
+    for fit, fix, color, label in zip(fit_list,fixed_list, color_list, label_list):
 
-        synthdata = all_stars_KPM(fixed, fit)
+        synthdata = all_stars_KPM(fix, fit)
 
         chi2_stars = np.sum(((data.alldata - synthdata)**2) * data.allivars, axis=1)
         chi2_elems = np.sum(((data.alldata - synthdata)**2) * data.allivars, axis=0)
@@ -147,7 +148,7 @@ def plot_chi2(data, fixed, fit_list, color_list, label_list):
         cdf = np.cumsum(pdf)
         ax0.plot(cdf, np.log10(bins_count[1:]), label=label, lw=1, color=color)
 
-        ax1.plot(fixed.elements, chi2_elems,
+        ax1.plot(fix.elements, chi2_elems,
             'o-', color=color, lw=1, label=label)
 
     ax0.set_xlabel(r'N$_{*}$/N$_{\rm total}$', fontsize=12)
