@@ -19,7 +19,7 @@ def one_star_KPM(lnAs, lnqs, D):
     ## comments
     - Note the `ln10`. 
     """
-    return (logsumexp(lnAs[:-1, None] + lnqs, axis=0) / _LN10) - (D * jnp.abs(lnAs[-1,None]))
+    return (logsumexp(lnAs[:-1, None] + lnqs, axis=0) / _LN10) - (D * lnAs[-1,None])
 
 def one_star_chi(lnAs, lnqs, alldata, sqrt_ivars, sqrt_Lambda_A, D, sqrt_Lambda_D):
     """
@@ -36,7 +36,7 @@ def one_star_chi(lnAs, lnqs, alldata, sqrt_ivars, sqrt_Lambda_A, D, sqrt_Lambda_
 
     return jnp.concatenate([sqrt_ivars * (alldata - one_star_KPM(lnAs, lnqs, D)),
                             sqrt_Lambda_A * jnp.exp(lnAs[:-1]), 
-                            jnp.array(sqrt_Lambda_D * D * jnp.abs(lnAs[-1])).reshape(1)]) #Magic 5
+                            jnp.array(sqrt_Lambda_D * D * lnAs[-1]).reshape(1)])
 
     # return jnp.concatenate([sqrt_ivars * (alldata - one_star_KPM(lnAs, lnqs, D)),
     #                         sqrt_Lambda * jnp.exp(lnAs[:-1])]) # pre D code
@@ -80,7 +80,7 @@ def one_element_KPM(lnqs, lnAs, D):
     - Note the `ln10`.
     """
 
-    return (logsumexp(lnqs + lnAs[:-1,:], axis=0) / _LN10) - (D * jnp.abs(lnAs[-1,:]))
+    return (logsumexp(lnqs + lnAs[:-1,:], axis=0) / _LN10) - (D * lnAs[-1,:])
 
 def one_element_chi(lnq_pars, lnAs, alldata, sqrt_ivars, L, xs, sqrt_Lambdas, q0s, D):
     """

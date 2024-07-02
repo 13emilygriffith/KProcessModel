@@ -20,29 +20,16 @@ def plot_qs(data, fixed, fit):
     """
     MgH = np.linspace(fixed.xlim[0]-0.2, fixed.xlim[1]+0.2, 300) # plotting xs
     new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH, np.zeros((fixed.K+1, len(MgH))), fixed.D)) # interp to plotting xs
-    # w22_MgH = w22_metallicities
-    # w22_qs = np.exp(w22_lnqs)
 
     plt.figure(figsize=(15, 2.5*data.M//4+1))
     for i in range(data.M):
         plt.subplot(data.M//4+1,4,i+1)
-        new_qcc = new_qs[0,:,i]
-        new_qIa = new_qs[1,:,i]
-        # w22_qcc = w22_qs[0,:,i]
-        # w22_qIa = w22_qs[1,:,i]
 
-        # plt.plot(w22_MgH, w22_qcc, 'b-', lw=4, alpha=0.25, label='qcc W22')
-        # plt.plot(w22_MgH, w22_qIa, 'r-', lw=4, alpha=0.25, label='qIa W22')
-
-        plt.plot(MgH, new_qcc, 'b-', alpha=0.9, label='qcc')
-        plt.plot(MgH, new_qIa, 'r-', alpha=0.9, label='qIa')
-
-        if fixed.K==4:
-          new_qagb = new_qs[2,:,i]
-          new_q4 = new_qs[3,:,i]
-
-          plt.plot(MgH, new_qagb, 'm-', alpha=0.9, label='qagb')
-          plt.plot(MgH, new_q4, 'c-', alpha=0.9, label='q4')
+        for k in range(fixed.K):
+            q = new_qs[k,:,i]
+            plt.plot(MgH, q, '-', alpha=0.9, label='q_'+str(k))
+        plt.gca().set_prop_cycle(None)
+       
 
         plt.xlabel('[Mg/H]')
         plt.xlim(np.min(fixed.xs), np.max(fixed.xs))

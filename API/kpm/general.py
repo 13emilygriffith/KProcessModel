@@ -32,7 +32,7 @@ def all_stars_KPM(fixed, fit):
     - Note the `ln10`.
     """
     return (logsumexp(fit.lnAs[:-1, :, None]
-                     + get_lnqs(fixed, fit), axis=0) / _LN10) - (fixed.D * jnp.abs(fit.lnAs[-1,:,None]))
+                     + get_lnqs(fixed, fit), axis=0) / _LN10) - (fixed.D * fit.lnAs[-1,:,None])
 
 def fourier_sum(amps, argument):
     foo = amps[0] * jnp.ones_like(argument)
@@ -49,7 +49,7 @@ def internal_get_lnqs(lnq_pars, L, xs, lnAs, D):
     """
     sums of sines and cosines
     """
-    xs_dilute = xs + (D * jnp.abs(lnAs[-1,:]))
+    xs_dilute = xs + (D * lnAs[-1,:])
     tmp = jnp.swapaxes(lnq_pars, 1, 2)
     return fourier_sum_orama(tmp, xs_dilute / L)
 

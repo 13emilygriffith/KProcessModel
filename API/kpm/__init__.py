@@ -7,3 +7,4 @@ from .regularize import regularizations
 from .initialize import initialize, run_kpm, initialize_As, find_As, initialize_from_2
 from .optimize import Aq_step
 from .visualize import *
+from .one_star import one_star_KPM

@@ -107,8 +107,19 @@ def find_As(data, fixed, lnq_pars, verbose=False):
 	if fixed.D == 1:
 		fit.lnAs[-1,:] = np.ones(data.N)*0.00
 
-	fit.lnAs, _ = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=fixed.I, verbose=verbose)
-
+	fixed.dilution = False
+	new_lnAs, dc2 = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=fixed.I, verbose=verbose)
+	print('find_As: delta chi2 ', np.nansum(dc2),
+		'number of bad values: ', np.sum(np.logical_not(np.isfinite(dc2))),
+		'number of worse stars:', np.sum(dc2<-0.01))
+	fixed.dilution = True
+	fit.lnAs = new_lnAs
+	for itter in range(10):
+		new_lnAs, dc2 = A_step(data, fixed, fit.lnq_pars, fit.lnAs, I=fixed.I, verbose=verbose)
+		print('find_As: delta chi2 ', np.nansum(dc2),
+			'number of bad values: ', np.sum(np.logical_not(np.isfinite(dc2))),
+			'number of worse stars:', np.sum(dc2<-0.01))
+		fit.lnAs = new_lnAs
 	return fit
 
 
