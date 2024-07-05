@@ -10,7 +10,6 @@ class regularizations:
 	def __init__(self, data, fixed):
 
 		self.A = self.A_c(fixed)
-		self.D = self.D_c(fixed)
 		self.Q = self.Q_c(data, fixed)
 
 	class A_c:
@@ -29,21 +28,6 @@ class regularizations:
 		def sqrt_Lambda_A(self):
 			return self._sqrt_Lambda_A
 
-	class D_c:
-		"""
-		Add Text
-
-		sqrt_Lambda_D: float
-		squareroot of regularizations for dilution
-
-		"""
-
-		def __init__(self, fixed):
-			self._sqrt_Lambda_D = fixed.sqrt_Lambda_D
-
-		@property
-		def sqrt_Lambda_D(self):
-			return self._sqrt_Lambda_D
 
 	class Q_c:
 

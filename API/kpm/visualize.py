@@ -19,7 +19,7 @@ def plot_qs(data, fixed, fit):
     - Need to set size and number of subplots based on number of elements
     """
     MgH = np.linspace(fixed.xlim[0]-0.2, fixed.xlim[1]+0.2, 300) # plotting xs
-    new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH, np.zeros((fixed.K+1, len(MgH))), fixed.D)) # interp to plotting xs
+    new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH, np.zeros((fixed.K, len(MgH))), fixed.Delta)) # interp to plotting xs
 
     plt.figure(figsize=(15, 2.5*data.M//4+1))
     for i in range(data.M):

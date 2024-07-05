@@ -160,8 +160,6 @@ class fixed_params:
 		Number of parameters in lnq_par model. Can only be odd. If given an
 		even number, will use J-1
 		Default is 9
-	dilution:
-	D:
 	elements: numpy array shape(M)
 		List of elements to fit with q_step. Should be identical to list in 
 		'abund_data' class.
@@ -204,9 +202,9 @@ class fixed_params:
 	ln_noise: float
 		Log of hacky amplitude of noise used to improve the optimization
 		Default is -4.0
-	D_noise: float
-		Hacky amplitude of noise used to improve the of dilution parameter
-		Default is 0.05
+	Delta: float
+		Value of dilution coefficient to be applied to all stars
+		Default is 0.0
 
 	Class Methods
 	-------------
@@ -224,18 +222,16 @@ class fixed_params:
 		resets K but not other values
 	"""
 	
-	def __init__(self, data, K=2, J=9, dilution=False,
+	def __init__(self, data, K=2, J=9,
 				 A_list=np.array(['Mg','Fe']),
 				 proc_elems=np.array(['Mg','Fe']), 
 				 q_fixed=np.array([[1.,0.],[0.4,0.6]]),
 				 Lambda_qs=np.array([1.e6, 1.e3]),
 				 Lambda_As=np.array([0, 0]),
-				 Lambda_D= 1.e1, 
-				 ln_noise=-4.0, D_noise=0.05):
+				 ln_noise=-4.0, Delta=0.0):
 
 		self.K = K
 		self.J = J
-		self.dilution = dilution
 		self._elements = data.elements
 		self.A_list = A_list
 
@@ -262,10 +258,10 @@ class fixed_params:
 		
 		self.Lambda_qs = Lambda_qs
 		self.Lambda_As = Lambda_As
-		self.Lambda_D = Lambda_D
 
 		self._ln_noise = ln_noise
-		self._D_noise = D_noise
+
+		self._Delta = Delta
 
 	@property
 	def K(self):
@@ -295,23 +291,6 @@ class fixed_params:
 			model must be odd. Got J= %f, using %f" % (value, value-1))
 			self._J = value-1
 		else: self._J = value
-
-	@property
-	def dilution(self):
-		return self._dilution
-
-	@dilution.setter
-	def dilution(self, value):
-		if isinstance(value, bool): 
-			self._dilution = value
-			self._D = int(value)
-		else:
-			raise TypeError("Attribute dilution must be a bool. \
-				Got: %s" % (type(value)))
-
-	@property
-	def D(self):
-		return self._D
 
 	@property
 	def elements(self):
@@ -464,27 +443,6 @@ class fixed_params:
 	def sqrt_Lambda_As(self):
 		return self._sqrt_Lambda_As
 
-
-	@property
-	def Lambda_D(self):
-		return self._Lambda_D
-
-	@Lambda_D.setter
-	def Lambda_D(self, value):
-		if isinstance(value, float): pass
-		else:
-			raise TypeError("Attribute 'Lambda_D' must be a float."
-				"Got: %s" % (type(value)))
-		if value<0:
-			raise ValueError("Attribute 'Lambda_D' must be positive."
-				"Got: %s" % (value))
-		self._Lambda_D = value
-		self._sqrt_Lambda_D = np.sqrt(value)
-
-	@property
-	def sqrt_Lambda_D(self):
-		return self._sqrt_Lambda_D
-
 	@property
 	def Lambda_qs(self):
 		return self._Lambda_qs
@@ -514,13 +472,18 @@ class fixed_params:
 		self._ln_noise = value
 
 	@property
-	def D_noise(self):
-		return self._D_noise
+	def Delta(self):
+		return self._Delta
 
-	@D_noise.setter
-	# Need to add value errors here
-	def D_noise(self, value):
-		self._D_noise = value
+	@Delta.setter
+	def Delta(self, value):
+		if isinstance(value, float): pass
+		else: raise TypeError("Attribute 'Delta' must be a float. Got: %s" 
+			% (type(value)))
+		# if np.abs(value)>2: 
+		# 	# Should warn for large value
+		# 	#raise ValueError("You have chosen a very large Delta. Got %d" % (value))
+		self._Delta = value
 		
 	def __repr__(self):
 		attrs = {
@@ -532,7 +495,7 @@ class fixed_params:
 			"Lambda As":		self._Lambda_As,
 			"Lambda qs":		self._Lambda_qs,
 			"xlim":				self._xlim,
-			"dilution":			self._D
+			"Delta":			self._Delta
 		}
 
 		rep = "kpm.fixed_params{\n"
@@ -554,7 +517,7 @@ class fit_params:
 	lnq_pars: numpy array shape(K, J, M)
 		Array of log of coefficients for the q process vectors
 
-	lnAs: numpy array shape(K+1, N)
+	lnAs: numpy array shape(K, N)
 		Array of log of process amplitudes for each star
 		ADD about dilution
 	"""
@@ -562,7 +525,7 @@ class fit_params:
 	def __init__(self, data, fixed):
 
 		lnq_pars = np.zeros((fixed.K, fixed.J, data.M))
-		lnAs = np.zeros((fixed.K+1, data.N))
+		lnAs = np.zeros((fixed.K, data.N))
 
 		self._lnq_pars = lnq_pars
 		self._lnAs = lnAs 
@@ -587,7 +550,7 @@ class fit_params:
 	def lnAs(self, value):
 		if np.shape(value) == np.shape(self._lnAs): pass
 		else: 
-			raise ValueError("Attribute 'lnq_pars' must be shape %s. Got %s"
+			raise ValueError("Attribute 'lnAs' must be shape %s. Got %s"
 				% (np.shape(self._lnAs), np.shape(value)))
 		self._lnAs = value
 
