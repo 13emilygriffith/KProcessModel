@@ -13,12 +13,21 @@ __all__ = ["inflate_ivars", "A_step", "q_step", "Aq_step", "run_kpm"]
 
 def inflate_ivars(data, fixed, fit, Q=5):
 	"""
-	## inputs
+	Inflate `ivars` to discourage outliers from skewing model fits
 
-	## outputs
-	shape `(M, )` new array of ivars
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `fit`: KPM `fit_params` class
+	- `Q`: int strength of ivar inflation
 
-	## comments
+	Outputs
+	-------
+	- shape `(M, )` new array of ivars
+
+	Comments
+	--------
 	- This sucks
 
 	"""
@@ -30,11 +39,23 @@ def inflate_ivars(data, fixed, fit, Q=5):
 
 def A_step(data, fixed, lnq_pars, lnAs, I=None, verbose=False):
 	"""
-	## inputs
-	## outputs
+	Optimize the `lnAs` for all stars
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
+	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
+	- `I`: shape `(M)` boolean of element ids to include in the fit
+	- `verbose`: boolean print fit information
+
+	Outputs
+	-------
 	shape `(K, N)` best-fit natural-logarithmic amplitudes
 
-	## bugs
+	Comments
+	--------
 	- Ridiculous post-processing of outputs, with MAGIC numbers.
 	"""
    
@@ -57,19 +78,24 @@ def A_step(data, fixed, lnq_pars, lnAs, I=None, verbose=False):
 		new_lnAs = jnp.where(new_lnAs < -9.0, -9.0, new_lnAs)
 	return new_lnAs, dc2
 
+
 def q_step(data, fixed, lnq_pars, lnAs, verbose=False):
 	"""
-	## inputs
+	Optimize the `lnq_pars` for all stars
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
 	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
-	- `alldata`: shape `(N, M)` log_10 abundance measurements
-	- `sqrt_allivars`: shape `(N, M)` inverse errors on alldata
-	- `xs` : shape `(N, )` metallicities to use with `metallicities`
-	- `old_lnqs`: shape `(K, Nbin, M)` initialization for optimizations
 
-	## outputs
-	shape `(K, Nbin, M)` best-fit natural-logarithmic processes
+	Outputs
+	-------
+	shape `(K, J, M)` best-fit natural-logarithmic processes
 
-	## bugs
+	Comments
+	--------
 	- Ridiculous post-processing of outputs.
 	"""
 	
@@ -95,6 +121,18 @@ def q_step(data, fixed, lnq_pars, lnAs, verbose=False):
 def objective_q(data, fixed, lnq_pars, lnAs):
 	"""
 	This is NOT the objective, but it stands in for now!!
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
+	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
+
+	Outputs
+	-------
+	- chi value for q step
+
 	"""
 	regs = regularizations(data, fixed)
 	chi = vmap(one_element_chi, in_axes=(2, None, 1, 1, None, None, 2, 2, None),
@@ -105,6 +143,18 @@ def objective_q(data, fixed, lnq_pars, lnAs):
 def objective_A(data, fixed, lnq_pars, lnAs):
 	"""
 	This is NOT the objective, but it stands in for now!!
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
+	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
+
+	Outputs
+	-------
+	- chi value for A step
+
 	"""
 	regs = regularizations(data, fixed)
 	chi = vmap(one_star_chi, in_axes=(1, 1, 0, 0, None, None),
@@ -114,7 +164,20 @@ def objective_A(data, fixed, lnq_pars, lnAs):
 
 def Aq_step(data, fixed, fit, verbose=False):
 	"""
-	## Bugs:
+	Calls both the q step and A step iteratively, updating objective when fit improves
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `fit`: KPM `fit_params` class
+
+	Outputs
+	-------
+	- updated `fir_params` class
+
+	Comments
+	--------
 	- This contains multiple hacks, especially the noisification hack.
 	- Maybe some of the hacks should be pushed back into the A-step and
 	  the q-step?

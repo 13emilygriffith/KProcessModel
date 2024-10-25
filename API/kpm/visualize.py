@@ -14,10 +14,15 @@ __all__ = ["plot_qs", "plot_As", "plot_model_abundances", "plot_fk", "plot_chi2"
 
 def plot_qs(data, fixed, fit):
     """
-    # Bugs:
-    - Assumes a rigid structure for the processes?
-    - Need to set size and number of subplots based on number of elements
+    Creates a subplot of q vectors for all elements
+
+    Inputs
+    ------
+    - `data`: KPM `abund_data` class
+    - `fixed`: KPM `fixed_params` class
+    - `fit`: KPM `fit_params` class
     """
+
     MgH = np.linspace(fixed.xlim[0]-0.2, fixed.xlim[1]+0.2, 300) # plotting xs
     new_qs = np.exp(internal_get_lnqs(fit.lnq_pars, fixed.L, MgH, np.zeros((fixed.K, len(MgH))), fixed.Delta)) # interp to plotting xs
 
@@ -42,22 +47,39 @@ def plot_qs(data, fixed, fit):
     plt.tight_layout()
 
 def plot_As(fit):
-	plt.figure(figsize=(3,3))
+    """
+    Creates a plot of A2/A1 vs. A1 
 
-	Acc = np.exp(fit.lnAs[0,:])
-	AIa = np.exp(fit.lnAs[1,:])
+    Inputs
+    ------
+    - `data`: KPM `abund_data` class
+    - `fixed`: KPM `fixed_params` class
+    - `fit`: KPM `fit_params` class
+    """
+    plt.figure(figsize=(3,3))
 
-	plt.hist2d(Acc, AIa/Acc, bins=100, range=[[0,3],[-0.05,1.5]],
-	           norm=LogNorm(), cmap='PuOr_r', rasterized=True)
-	plt.xlabel(r'$A^{\rm CC}_{i}$', fontsize=12)
-	plt.ylabel(r'$A^{\rm Ia}_{i}/A^{\rm CC}_{i}$', fontsize=12)
+    Acc = np.exp(fit.lnAs[0,:])
+    AIa = np.exp(fit.lnAs[1,:])
+
+    plt.hist2d(Acc, AIa/Acc, bins=100, range=[[0,3],[-0.05,1.5]],
+               norm=LogNorm(), cmap='PuOr_r', rasterized=True)
+    plt.xlabel(r'$A^{\rm CC}_{i}$', fontsize=12)
+    plt.ylabel(r'$A^{\rm Ia}_{i}/A^{\rm CC}_{i}$', fontsize=12)
 
 
 def plot_model_abundances(data, fixed, fit, noise=False):
     """
-    ## bugs:
-    - Relies on lots of global variables.
+    Creates subplots of observed abundance distribution, predicted abundance distribution,
+        and correlation of [Mg/H] residual with [X/H] residual for each element
+
+    Inputs
+    ------
+    - `data`: KPM `abund_data` class
+    - `fixed`: KPM `fixed_params` class
+    - `fit`: KPM `fit_params` class
+    - `noise`: boolean to include error scattering or not
     """
+
     MgHmin = np.min(fixed.xs) - 0.1
 
     synthdata = all_stars_KPM(fixed, fit)
@@ -101,6 +123,16 @@ def plot_model_abundances(data, fixed, fit, noise=False):
     plt.tight_layout()
 
 def plot_fk(data, fixed, fit):
+    """
+    Creates subplots of the fractional contribution from each process to each elmeent
+        of each star
+
+    Inputs
+    ------
+    - `data`: KPM `abund_data` class
+    - `fixed`: KPM `fixed_params` class
+    - `fit`: KPM `fit_params` class
+    """
 
     plt.figure(figsize=(2.5*(fixed.K), 2.5*data.M))
     
@@ -120,6 +152,17 @@ def plot_fk(data, fixed, fit):
 
 
 def plot_chi2(data, fixed_list, fit_list, color_list, label_list):
+    """
+    Plots the chi2 distribution and the chi2 per star for a list of fits
+
+    Inputs
+    ------
+    - `data`: KPM `abund_data` class. Same for all fits
+    - `fixed_list`: list of KPM `fixed_params` class
+    - `fit_list`: list of KPM `fit_params` class
+    - `color_list`: list of colors
+    - `label_list`: list of labels for fits
+    """
 
     f, (ax0, ax1) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [1, 3]}, figsize=(10,3))
 

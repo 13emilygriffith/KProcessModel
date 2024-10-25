@@ -31,9 +31,6 @@ class abund_data:
 	N: int
 		Number of stars
 
-	Class Methods
-	----------
-
 
 	TO DO
 	-----
@@ -379,10 +376,10 @@ class fixed_params:
 		else:
 			raise ValueError("First element of 'xlim' must be less than the \
 				second element.")
-		if (value[0] > np.nanmax(self._xs)) or (value[1] < np.nanmin(self._xs)):
-			raise ValueError("Attribute 'xlim' must overlap with 'xs' whose \
-				minimum is %s and maximum is %s" % (np.nanmin(self._xs,
-					np.nanmax(self._xs))))
+		# if (value[0] > np.nanmax(self._xs)) or (value[1] < np.nanmin(self._xs)):
+		# 	raise ValueError("Attribute 'xlim' must overlap with 'xs' whose \
+		# 		minimum is %s and maximum is %s" % (np.nanmin(self._xs,
+		# 			np.nanmax(self._xs))))
 
 		self._xlim = value
 		self._L = value[0] - value[1]
@@ -519,7 +516,6 @@ class fit_params:
 
 	lnAs: numpy array shape(K, N)
 		Array of log of process amplitudes for each star
-		ADD about dilution
 	"""
 
 	def __init__(self, data, fixed):

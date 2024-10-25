@@ -8,30 +8,39 @@ from .general import internal_get_lnqs
 
 def one_star_KPM(lnAs, lnqs, Delta):
     """
-    ## inputs
+    Calcualte abundances for one star
+
+    Inputs
+    ------
     - `lnAs`: shape `(K+1)` natural-logarithmic amplitudes
     - `lnqs`: shape `(K, M)` natural-logarithmic processes
-    - `D`: binary (1 = dilution on)
+    - `Delta`: float dilution value
 
-    ## outputs
-    shape `(M, )` log_10 abundances
+    Outputs
+    -------
+    - shape `(M, )` log_10 abundances
 
-    ## comments
+    Comments
+    --------
     - Note the `ln10`. 
     """
     return (logsumexp(lnAs[:, None] + lnqs, axis=0) / _LN10) - (Delta)
 
 def one_star_chi(lnAs, lnqs, alldata, sqrt_ivars, sqrt_Lambda_A, Delta):
     """
-    ## inputs
+    Calcualte chi value for one star 
+
+    Inputs
+    ------
     - `lnAs`: shape `(K, )` natural-logarithmic amplitudes
     - `lnqs`: shape `(K, M)` natural-logarithmic processes
     - `alldata`: shape `(M, )` log_10 abundance measurements
     - `sqrt_ivars`: shape `(M, )` inverse errors on the data
     - `sqrt_Lambda`: shape `(K, )` regularization strength on As
 
-    ## outputs
-    chi for this one star
+    Outputs
+    -------
+    - chi for one star
     """
 
     return jnp.concatenate([sqrt_ivars * (alldata - one_star_KPM(lnAs, lnqs, Delta)),
@@ -39,17 +48,22 @@ def one_star_chi(lnAs, lnqs, alldata, sqrt_ivars, sqrt_Lambda_A, Delta):
 
 def one_star_A_step(lnqs, alldata, sqrt_ivars, sqrt_Lambda_A, Delta, init):
     """
-    ## inputs
+    Optimize the lnA values for one star
+
+    Inputs
+    ------
     - `lnqs`: shape `(K, M)` natural-logarithmic processes 
     - `alldata`: shape `(M, )` log_10 abundance measurements
     - `sqrt_ivars`: shape `(M, )` inverse errors on the data
     - `sqrt_Lambda`: shape `(K, )` regularization
     - `init`: shape `(K,)` initial guess for the A vector
 
-    ## outputs
-    shape `(K,)` best-fit natural-logarithmic amplitudes
+    Outputs
+    -------
+    - shape `(K,)` best-fit natural-logarithmic amplitudes
 
-    ## bugs
+    Comments
+    --------
     - Doesn't check the output of the optimizer AT ALL.
     - Check out the crazy `maxiter` input!
     """
@@ -63,15 +77,20 @@ def one_star_A_step(lnqs, alldata, sqrt_ivars, sqrt_Lambda_A, Delta, init):
 
 def one_element_KPM(lnqs, lnAs, Delta):
     """
-    ## inputs
+    Calculate the abundances for one element
+
+    Inputs
+    ------
     - `lnqs`: shape `(K)` natural-logarithmic process elements
     - `lnAs`: shape `(K+1, N)` natural-logarithmic amplitudes
-    - `D`: binary (1 = dilution on)
+    - `Delta`: float dilution value
 
-    ## outputs
-    shape `(N, )` log_10 abundances
+    Outputs
+    -------
+    - shape `(N, )` log_10 abundances
 
-    ## comments
+    Comments
+    --------
     - Note the `ln10`.
     """
 
@@ -79,18 +98,22 @@ def one_element_KPM(lnqs, lnAs, Delta):
 
 def one_element_chi(lnq_pars, lnAs, alldata, sqrt_ivars, L, xs, sqrt_Lambdas, q0s, Delta):
     """
-    ## inputs
+    Calculate chi value for one element
+
+    Inputs
+    ------
     - `lnqs`: shape `(K, J)` natural-logarithmic process vectors
     - `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
     - `alldata`: shape `(N, )` log_10 abundance measurements
     - `sqrt_ivars`: shape `(N, )` inverse variances on the data
-    - `L`: xrange
+    - `L`: float xrange
     - `xs` : shape `(N, )` metallicities to use with `metallicities`
     - `sqrt_Lambdas`: shape `(K, Nbin)` list of regularization amplitudes
     - `q0s`: shape `(K, J)` 
 
-    ## outputs
-    chi for this one star (weighted residual)
+    Outputs
+    -------
+    - chi for this one element (weighted residual)
     """
     lnqs = internal_get_lnqs(lnq_pars[:, :, None], L, xs, lnAs, Delta)[:, :, 0]
     return jnp.concatenate([sqrt_ivars * (alldata - one_element_KPM(lnqs, lnAs, Delta)),
@@ -99,19 +122,28 @@ def one_element_chi(lnq_pars, lnAs, alldata, sqrt_ivars, L, xs, sqrt_Lambdas, q0
 def one_element_q_step(lnAs, alldata, sqrt_ivars, L, xs, sqrt_Lambdas, q0s,
                        fixed, Delta, init):
     """
-    ## inputs
+    Optimize the lnq_params for one element
+
+    Inputs
+    ------
     - `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
     - `alldata`: shape `(N, )` log_10 abundance measurements
     - `sqrt_ivars`: shape `(N, )` inverse errors on the data
     - `L`: xrange
     - `xs` : shape `(N, )` metallicities to use with `metallicities`
-    - ... 
+    - `sqrt_Lambdas`: shape `(K, Nbin)` list of regularization amplitudes
+    - `q0s`: shape `(K, J)` 
+    - `fixed`: KPM `fixed_params` class
+    - `Delta`: float dilution value
+    - `init`: shape `(J,)` initial guess for the q vector
 
-    ## outputs
-    shape `(K, J)` best-fit natural-logarithmic process elements
+    Outputs
+    -------
+    - shape `(K, J)` best-fit natural-logarithmic process elements
 
-    ## bugs
-    - Uses the `fixed` input incredibly stupidly, because Hogg SUX.
+    Comments
+    --------
+    - Uses the `fixed` input incredibly stupidly
     - Doesn't check the output of the optimizer AT ALL.
     - Check out the crazy `maxiter` input!
     """
