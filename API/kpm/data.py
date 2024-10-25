@@ -31,9 +31,6 @@ class abund_data:
 	N: int
 		Number of stars
 
-	Class Methods
-	----------
-
 
 	TO DO
 	-----
@@ -199,9 +196,12 @@ class fixed_params:
 		Default is [1.e6, 1.e3]
 	sqrt_Lambda_As: numpy array shape(K)
 		Array of squareroot of the regularisation strengths on A values.
-	ln_noise: int
+	ln_noise: float
 		Log of hacky amplitude of noise used to improve the optimization
 		Default is -4.0
+	Delta: float
+		Value of dilution coefficient to be applied to all stars
+		Default is 0.0
 
 	Class Methods
 	-------------
@@ -224,8 +224,8 @@ class fixed_params:
 				 proc_elems=np.array(['Mg','Fe']), 
 				 q_fixed=np.array([[1.,0.],[0.4,0.6]]),
 				 Lambda_qs=np.array([1.e6, 1.e3]),
-				 Lambda_As=np.array([1.e3, 1.e3]), 
-				 ln_noise=-4.0):
+				 Lambda_As=np.array([0, 0]),
+				 ln_noise=-4.0, Delta=0.0):
 
 		self.K = K
 		self.J = J
@@ -257,6 +257,8 @@ class fixed_params:
 		self.Lambda_As = Lambda_As
 
 		self._ln_noise = ln_noise
+
+		self._Delta = Delta
 
 	@property
 	def K(self):
@@ -374,10 +376,10 @@ class fixed_params:
 		else:
 			raise ValueError("First element of 'xlim' must be less than the \
 				second element.")
-		if (value[0] > np.nanmax(self._xs)) or (value[1] < np.nanmin(self._xs)):
-			raise ValueError("Attribute 'xlim' must overlap with 'xs' whose \
-				minimum is %s and maximum is %s" % (np.nanmin(self._xs,
-					np.nanmax(self._xs))))
+		# if (value[0] > np.nanmax(self._xs)) or (value[1] < np.nanmin(self._xs)):
+		# 	raise ValueError("Attribute 'xlim' must overlap with 'xs' whose \
+		# 		minimum is %s and maximum is %s" % (np.nanmin(self._xs,
+		# 			np.nanmax(self._xs))))
 
 		self._xlim = value
 		self._L = value[0] - value[1]
@@ -424,8 +426,8 @@ class fixed_params:
 			raise TypeError("Attribute 'Lambda_As' must be a numpy array."
 				"Got: %s" % (type(value)))
 		if len(value) != self._K:
-			raise ValueError("Length of 'Lambda_As must be equal to K."
-				"Got %s" % (len(value)))
+			raise ValueError("Length of 'Lambda_As must be equal to K.\
+				Got %s" % (len(value)))
 		for L in value:
 			if isinstance(L, float): pass
 			else: 
@@ -465,6 +467,20 @@ class fixed_params:
 	@ln_noise.setter
 	def ln_noise(self, value):
 		self._ln_noise = value
+
+	@property
+	def Delta(self):
+		return self._Delta
+
+	@Delta.setter
+	def Delta(self, value):
+		if isinstance(value, float): pass
+		else: raise TypeError("Attribute 'Delta' must be a float. Got: %s" 
+			% (type(value)))
+		# if np.abs(value)>2: 
+		# 	# Should warn for large value
+		# 	#raise ValueError("You have chosen a very large Delta. Got %d" % (value))
+		self._Delta = value
 		
 	def __repr__(self):
 		attrs = {
@@ -475,7 +491,8 @@ class fixed_params:
 			"J":				self._J,
 			"Lambda As":		self._Lambda_As,
 			"Lambda qs":		self._Lambda_qs,
-			"xlim":				self._xlim
+			"xlim":				self._xlim,
+			"Delta":			self._Delta
 		}
 
 		rep = "kpm.fixed_params{\n"
@@ -529,7 +546,7 @@ class fit_params:
 	def lnAs(self, value):
 		if np.shape(value) == np.shape(self._lnAs): pass
 		else: 
-			raise ValueError("Attribute 'lnq_pars' must be shape %s. Got %s"
+			raise ValueError("Attribute 'lnAs' must be shape %s. Got %s"
 				% (np.shape(self._lnAs), np.shape(value)))
 		self._lnAs = value
 

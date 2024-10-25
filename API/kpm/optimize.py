@@ -13,12 +13,21 @@ __all__ = ["inflate_ivars", "A_step", "q_step", "Aq_step", "run_kpm"]
 
 def inflate_ivars(data, fixed, fit, Q=5):
 	"""
-	## inputs
+	Inflate `ivars` to discourage outliers from skewing model fits
 
-	## outputs
-	shape `(M, )` new array of ivars
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `fit`: KPM `fit_params` class
+	- `Q`: int strength of ivar inflation
 
-	## comments
+	Outputs
+	-------
+	- shape `(M, )` new array of ivars
+
+	Comments
+	--------
 	- This sucks
 
 	"""
@@ -30,21 +39,33 @@ def inflate_ivars(data, fixed, fit, Q=5):
 
 def A_step(data, fixed, lnq_pars, lnAs, I=None, verbose=False):
 	"""
-	## inputs
-	## outputs
+	Optimize the `lnAs` for all stars
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
+	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
+	- `I`: shape `(M)` boolean of element ids to include in the fit
+	- `verbose`: boolean print fit information
+
+	Outputs
+	-------
 	shape `(K, N)` best-fit natural-logarithmic amplitudes
 
-	## bugs
+	Comments
+	--------
 	- Ridiculous post-processing of outputs, with MAGIC numbers.
 	"""
    
 	regs = regularizations(data, fixed) 
 	if I==None: I = [True]*data.M
 
-	new_lnAs, dc2 = vmap(one_star_A_step, in_axes=(1, 0, 0, None, 1),
-					out_axes=(1, 0))(internal_get_lnqs(lnq_pars[:,:,I], fixed.L, fixed.xs), 
+	new_lnAs, dc2 = vmap(one_star_A_step, in_axes=(1, 0, 0, None, None, 1),
+					out_axes=(1, 0))(internal_get_lnqs(lnq_pars[:,:,I], fixed.L, fixed.xs, lnAs, fixed.Delta), 
 					data.alldata[:,I], data.sqrt_allivars[:,I], 
-					regs.A.sqrt_Lambda_A, lnAs)
+					regs.A.sqrt_Lambda_A, fixed.Delta, lnAs)
 	new_lnAs = jnp.where(dc2 < 0, lnAs, new_lnAs)
 	if not jnp.all(jnp.isfinite(new_lnAs)):
 		if verbose: print("A-step(): fixing bad elements:", jnp.sum(jnp.logical_not(jnp.isfinite(new_lnAs))))
@@ -57,28 +78,33 @@ def A_step(data, fixed, lnq_pars, lnAs, I=None, verbose=False):
 		new_lnAs = jnp.where(new_lnAs < -9.0, -9.0, new_lnAs)
 	return new_lnAs, dc2
 
+
 def q_step(data, fixed, lnq_pars, lnAs, verbose=False):
 	"""
-	## inputs
+	Optimize the `lnq_pars` for all stars
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
 	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
-	- `alldata`: shape `(N, M)` log_10 abundance measurements
-	- `sqrt_allivars`: shape `(N, M)` inverse errors on alldata
-	- `xs` : shape `(N, )` metallicities to use with `metallicities`
-	- `old_lnqs`: shape `(K, Nbin, M)` initialization for optimizations
 
-	## outputs
-	shape `(K, Nbin, M)` best-fit natural-logarithmic processes
+	Outputs
+	-------
+	shape `(K, J, M)` best-fit natural-logarithmic processes
 
-	## bugs
+	Comments
+	--------
 	- Ridiculous post-processing of outputs.
 	"""
 	
 	regs = regularizations(data, fixed)
 
-	new_lnq_pars, dc2 = vmap(one_element_q_step, in_axes=(None, 1, 1, None, None, 2, 2, 2, 2),
+	new_lnq_pars, dc2 = vmap(one_element_q_step, in_axes=(None, 1, 1, None, None, 2, 2, 2, None, 2),
 					out_axes=(2, 0))(lnAs, data.alldata, data.sqrt_allivars, 
 					fixed.L, fixed.xs, jnp.sqrt(regs.Q.Lambdas), jnp.array(regs.Q.q0s),
-					jnp.array(regs.Q.fixed_q), lnq_pars)
+					jnp.array(regs.Q.fixed_q), fixed.Delta, lnq_pars)
 	new_lnq_pars = jnp.where(dc2 < 0, lnq_pars, new_lnq_pars)
 	if not np.all(jnp.isfinite(new_lnq_pars)):
 		if verbose: print("q-step(): fixing bad elements:", np.sum(jnp.logical_not(jnp.isfinite(new_lnq_pars))))
@@ -95,26 +121,63 @@ def q_step(data, fixed, lnq_pars, lnAs, verbose=False):
 def objective_q(data, fixed, lnq_pars, lnAs):
 	"""
 	This is NOT the objective, but it stands in for now!!
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
+	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
+
+	Outputs
+	-------
+	- chi value for q step
+
 	"""
 	regs = regularizations(data, fixed)
-	chi = vmap(one_element_chi, in_axes=(2, None, 1, 1, None, None, 2, 2),
+	chi = vmap(one_element_chi, in_axes=(2, None, 1, 1, None, None, 2, 2, None),
 			   out_axes=(0))(lnq_pars, lnAs, data.alldata, data.sqrt_allivars, fixed.L, fixed.xs,
-							 jnp.sqrt(regs.Q.Lambdas), regs.Q.q0s)
-	return np.sum(chi * chi) + np.sum((regs.A.sqrt_Lambda_A[:, None] * jnp.exp(lnAs)) ** 2)
+							 jnp.sqrt(regs.Q.Lambdas), regs.Q.q0s, fixed.Delta)
+	return np.sum(chi * chi) + np.sum((regs.A.sqrt_Lambda_A[:, None] * jnp.exp(lnAs[-1:])) ** 2)
 
 def objective_A(data, fixed, lnq_pars, lnAs):
 	"""
 	This is NOT the objective, but it stands in for now!!
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `lnq_pars`: shape `(K, J, M)` natural-logarithmic processes
+	- `lnAs`: shape `(K, N)` natural-logarithmic amplitudes
+
+	Outputs
+	-------
+	- chi value for A step
+
 	"""
 	regs = regularizations(data, fixed)
-	chi = vmap(one_star_chi, in_axes=(1, 1, 0, 0, None),
-			   out_axes=(0))(lnAs, internal_get_lnqs(lnq_pars, fixed.L, fixed.xs),
-							 data.alldata, data.sqrt_allivars, regs.A.sqrt_Lambda_A)
+	chi = vmap(one_star_chi, in_axes=(1, 1, 0, 0, None, None),
+			   out_axes=(0))(lnAs, internal_get_lnqs(lnq_pars, fixed.L, fixed.xs, lnAs, fixed.Delta),
+							 data.alldata, data.sqrt_allivars, regs.A.sqrt_Lambda_A, fixed.Delta)
 	return np.sum(chi ** 2) + np.sum(regs.Q.Lambdas * (jnp.exp(lnq_pars) - regs.Q.q0s) ** 2)
 
 def Aq_step(data, fixed, fit, verbose=False):
 	"""
-	## Bugs:
+	Calls both the q step and A step iteratively, updating objective when fit improves
+
+	Inputs
+	------
+	- `data`: KPM `abund_data` class
+	- `fixed`: KPM `fixed_params` class
+	- `fit`: KPM `fit_params` class
+
+	Outputs
+	-------
+	- updated `fir_params` class
+
+	Comments
+	--------
 	- This contains multiple hacks, especially the noisification hack.
 	- Maybe some of the hacks should be pushed back into the A-step and
 	  the q-step?
@@ -132,10 +195,6 @@ def Aq_step(data, fixed, fit, verbose=False):
 	# Note the use of logaddexp, so things are non-intuitive here.
 	A_noise = fixed.ln_noise + np.log(_RNG.uniform(size=old_lnAs.shape))
 	init_lnAs = jnp.logaddexp(old_lnAs, A_noise)
-	q_noise = fixed.ln_noise + np.log(_RNG.uniform(size=old_lnq_pars.shape))
-	q_noise[:, :, data.elements == "Mg"] = -np.inf # HACK 
-	q_noise[:, :, data.elements == "Fe"] = -np.inf # HACK
-	init_lnq_pars = jnp.logaddexp(old_lnq_pars, q_noise)
 
 	# run q step
 	objective1 = objective_q(data, fixed, old_lnq_pars, init_lnAs)
@@ -160,14 +219,14 @@ def Aq_step(data, fixed, fit, verbose=False):
 	if objective4 < old_objective:
 		if verbose: print(prefix, "we took a step!", fixed.ln_noise, objective4, old_objective - objective4)
 		# If we took a step, then we can be more aggressive with the noise we are adding (see above).
-		fixed.ln_noise = np.around(fixed.ln_noise + 0.1, 1) # Gross global variable!
+		fixed.ln_noise = fixed.ln_noise + 0.1 # Magic
 		fit.lnq_pars = new_lnq_pars
 		fit.lnAs = new_lnAs
 
 	else:
 		if verbose: print(prefix, "we didn't take a step :(", fixed.ln_noise, old_objective, old_objective - objective4)
 		# If we didn't take a step, maybe it's because we added too much noise (see above)?
-		fixed.ln_noise = np.around(fixed.ln_noise - 1.0, 1)
+		fixed.ln_noise = fixed.ln_noise - 1.0
 		fit.lnq_pars = old_lnq_pars.copy()
 		fit.lnAs = old_lnAs.copy()
 

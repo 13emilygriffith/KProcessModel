@@ -6,6 +6,10 @@ from ._globals import *
 __all__ = ["regularizations"]
 
 class regularizations:
+	"""
+	Regularizations of process amplitudes (`A`) and process vector 
+	components (`Q`)
+	"""
 
 	def __init__(self, data, fixed):
 
@@ -14,10 +18,17 @@ class regularizations:
 
 	class A_c:
 		"""
-		Add Text
+		Regularizations of process amplitudes
 
-		sqrt_Lambda_A: jax array shape(K)
-		Array of squareroot of regularizations for all processes
+		Inputs
+		------
+		- `data`: KPM `abund_data` class
+		- `fixed`: KPM `fixed_params` class
+
+		Parameters
+		----------
+		- sqrt_Lambda_A: jax array shape(K)
+			Array of squareroot of regularizations for all processes
 
 		"""
 
@@ -28,13 +39,32 @@ class regularizations:
 		def sqrt_Lambda_A(self):
 			return self._sqrt_Lambda_A
 
+
 	class Q_c:
 
 		"""
-		Add Text
+		Regularizations of process vector components
 
-		TO DO: ADD For K>2
-		# q0s array is confusing. First element is the value of a flat line
+		Inputs
+		------
+		- `data`: KPM `abund_data` class
+		- `fixed`: KPM `fixed_params` class
+
+		Parameters
+		----------
+		- Lambdas: shape(K, J, M)
+			Array of regularizations for all elements and all J
+		- q0s: shape(K, J, M)
+			Array of initial q params
+		- lnq_par0: shape(K, J, M)
+			Array of initial lnq params
+		- fixed_q: shape(K, J, M)
+			Array of boolean values to delineate which `lnq_params` are fixed
+
+
+		Comments
+		--------
+		- q0s array is confusing. First element is the value of a flat line
 		  subsequent values are the coefficients of cos/sin to deviate away 
 		"""
 
